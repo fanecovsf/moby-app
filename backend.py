@@ -115,6 +115,29 @@ class Select:
         con.close()
 
         return result
+    
+    def role_authentication(user, password):
+        user = ("'" + user + "'")
+        password = ("'" + password + "'")
+
+        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        cur = con.cursor()
+
+        command =f'''SELECT * FROM sc_aplicativos.app_usuarios
+        WHERE usuario = {user}
+        AND senha = {password}
+        '''
+
+        cur.execute(command)
+        result = cur.fetchone()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        role = result[3]
+
+        return role
 
 class Update:
     def __init__(self):

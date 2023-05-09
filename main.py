@@ -198,12 +198,12 @@ class Register:
 #Login de administrador
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class AdminLogin:
-    def __init__(self, screen):
+    def __init__(self, roles, screen):
         sg.theme(THEME)
 
         #Layout
         layout = [
-            [sg.Push(), sg.Text('Digite os dados de administrador:', pad=(10,10)), sg.Push()],
+            [sg.Push(), sg.Text('Autenticação', pad=(10,10)), sg.Push()],
             [sg.Push(), sg.Text('Usuário:',pad=(10,10)), sg.Input(size=(30,0), key='admin_user'), sg.Push()],
             [sg.Push(), sg.Text('Senha:  ',pad=(10,10)), sg.Input(size=(30,0), key='admin_password', password_char='*'), sg.Push()],
             [sg.Button('Voltar', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,0), size=(15,0))]
@@ -219,12 +219,15 @@ class AdminLogin:
             if event == sg.WIN_CLOSED or event == 'Voltar':
                 break
             elif event == 'Login':
-                if self.values['admin_user'] == ADMIN_INFO['user'] and self.values['admin_password'] == ADMIN_INFO['password']:
-                    window.close()
-                    screen()
-                    break
+                if Select.user_authentication(self.values['admin_user'], self.values['admin_password']) == True:
+                    if Select.role_authentication(self.values['admin_user'], self.values['admin_password']) in roles:
+                        window.close()
+                        screen()
+                        break
+                    else:
+                        sg.popup('Esse usuário não tem permissão.')
                 else:
-                    sg.popup('Dados incorretos.')
+                    sg.popup('Usuário inexistente.')
 
         window.close()
 
@@ -257,7 +260,7 @@ class Login:
                 break
 
             elif event == 'Registro de usuário':
-                AdminLogin(Register)
+                AdminLogin(['Gestor', 'Supervisor', 'Desenvolvedor'], Register)
 
             elif event == 'Login':
                 if self.values['user'] == ADMIN_INFO['user'] and self.values['password'] == ADMIN_INFO['password']:
@@ -306,4 +309,4 @@ class Start:
         Login()
 
 
-AdmMenu()
+Start()
