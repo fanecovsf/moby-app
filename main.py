@@ -6,11 +6,13 @@ import pandas as pd
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 DEVELOPER_MODE = True
 
+ADMIN_PASSWORD = Select.user_information('admin','moby@bi')[2]
+
 ADMIN_INFO = {
-    'user': 'admin',
-    'password': 'moby@bi',
-    'email': 'powerbi_dev@mobyweb.com.br',
-    'role': 'Administrador'
+    'user': Select.user_information('admin', ADMIN_PASSWORD)[1],
+    'password': ADMIN_PASSWORD,
+    'email': Select.user_information('admin', ADMIN_PASSWORD)[0],
+    'role': Select.user_information('admin', ADMIN_PASSWORD)[3]
 }
 
 APP_NAME = 'Moby'
@@ -59,38 +61,42 @@ class UserList:
                 break
 
             elif event == 'Editar':
-                try:
-                    row_index = self.values['-TABLE-'][0]
+                row_index = self.values['-TABLE-'][0]
 
-                    selected_data = list(df.iloc[row_index])
+                selected_data = list(df.iloc[row_index])
 
-                    edit_layout = [
-                        [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-')],
-                        [sg.Text('Usuário:'), sg.InputText(selected_data[1], key='-USUÁRIO-')],
-                        [sg.Text('Senha:'), sg.InputText(selected_data[2], key='-SENHA-')],
-                        [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[3], key='-CARGO-')],
-                        [sg.Button('Salvar'), sg.Button('Cancelar')]
-                    ]
+                if selected_data[1] != 'admin':
+                    try:
 
-                    edit_window = sg.Window(APP_NAME, edit_layout, icon=ICON)
+                        edit_layout = [
+                            [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-')],
+                            [sg.Text('Usuário:'), sg.InputText(selected_data[1], key='-USUÁRIO-')],
+                            [sg.Text('Senha:'), sg.InputText(selected_data[2], key='-SENHA-')],
+                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[3], key='-CARGO-')],
+                            [sg.Button('Salvar'), sg.Button('Cancelar')]
+                        ]
 
-                    while True:
-                        edit_event, edit_values = edit_window.read()
+                        edit_window = sg.Window(APP_NAME, edit_layout, icon=ICON)
 
-                        if edit_event == sg.WIN_CLOSED or edit_event == 'Cancelar':
-                            edit_window.close()
-                            break
+                        while True:
+                            edit_event, edit_values = edit_window.read()
 
-                        elif edit_event == 'Salvar':
-                            df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-']]
+                            if edit_event == sg.WIN_CLOSED or edit_event == 'Cancelar':
+                                edit_window.close()
+                                break
 
-                            window['-TABLE-'].update(df.values.tolist())
+                            elif edit_event == 'Salvar':
+                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-']]
 
-                            Update.user_update(edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-'])
+                                window['-TABLE-'].update(df.values.tolist())
 
-                            edit_window.close()
-                except:
-                    pass
+                                Update.user_update(edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-'])
+
+                                edit_window.close()
+                    except:
+                        pass
+                elif selected_data[1] == 'admin':
+                    sg.popup('O usuário de administrador não pode ser editado.')
 
         window.close()
 
