@@ -95,9 +95,11 @@ class Select:
         cur.close()
         con.close()
 
-        logged_email, logged_user, logged_password, logged_role = result
-
         if result != None:
+            logged_email, logged_user, logged_password, logged_role = result
+            return logged_email, logged_user, logged_password, logged_role
+        else:
+            logged_email, logged_user, logged_password, logged_role = '', '', '', ''
             return logged_email, logged_user, logged_password, logged_role
         
     def user_list():

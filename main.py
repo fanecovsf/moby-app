@@ -6,7 +6,7 @@ import pandas as pd
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 DEVELOPER_MODE = True
 
-ADMIN_PASSWORD = Select.user_information('admin','moby@bi')[2]
+ADMIN_PASSWORD = 'moby@bi'
 
 ADMIN_INFO = {
     'user': Select.user_information('admin', ADMIN_PASSWORD)[1],
@@ -96,7 +96,7 @@ class UserList:
                     except:
                         pass
                 elif selected_data[1] == 'admin':
-                    sg.popup('O usuário de administrador não pode ser editado.')
+                    sg.popup('O usuário de administrador não pode ser editado.', title='Erro', icon=ICON)
 
         window.close()
 
@@ -187,17 +187,17 @@ class Register:
                             if Select.user_verification(self.values['register_user']) == True:
                                 try:
                                     Insert.register(self.values['register_email'],self.values['register_user'],self.values['register_password'],self.values['register_cargo'])
-                                    sg.popup('Usuário registrado com sucesso!', title='Registro de usuário')
+                                    sg.popup('Usuário registrado com sucesso!', title='Registro de usuário', icon=ICON)
                                 except:
-                                    sg.popup('E-mail já registrado, tente outro endereço.')
+                                    sg.popup('E-mail já registrado, tente outro endereço.', title='Erro', icon=ICON)
                             else:
-                                sg.popup('Usuário já registrado, tente outro nome de usuário.')
+                                sg.popup('Usuário já registrado, tente outro nome de usuário.', title='Erro', icon=ICON)
                         else:
-                            sg.popup('O endereço de e-mail parece inválido, tente outro endereço.')
+                            sg.popup('O endereço de e-mail parece inválido, tente outro endereço.', title='Erro', icon=ICON)
                     else:
-                        sg.popup('As senhas devem ser iguais.', title=APP_NAME)
+                        sg.popup('As senhas devem ser iguais.', title=APP_NAME, icon=ICON)
                 else:
-                    sg.popup('Preencha todos os campos.', title=APP_NAME)    
+                    sg.popup('Preencha todos os campos.', title=APP_NAME, icon=ICON)    
 
         window.close()
 
@@ -231,9 +231,9 @@ class AdminLogin:
                         screen()
                         break
                     else:
-                        sg.popup('Esse usuário não tem permissão.')
+                        sg.popup('Esse usuário não tem permissão.', title='Erro', icon=ICON)
                 else:
-                    sg.popup('Usuário inexistente.')
+                    sg.popup('Usuário inexistente.', title='Erro', icon=ICON)
 
         window.close()
 
@@ -274,17 +274,17 @@ class Login:
                     logged_password = ADMIN_INFO['password']
                     logged_email = ADMIN_INFO['email']
                     logged_role = ADMIN_INFO['role']
-                    sg.popup('Login realizado como administrador!', title='Login ADM')
+                    sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
                     window.close()
                     AdmMenu()
                 elif Select.user_authentication(self.values['user'], self.values['password']) == True:
                     user_info = Select.user_information(self.values['user'], self.values['password'])
                     logged_email, logged_user, logged_password, logged_role = user_info
-                    sg.popup('Login realizado com sucesso!', title='Login')
+                    sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
                     window.close()
                     PrincipalMenu()
                 else:
-                    sg.popup('Usuário e/ou senha incorretos.',title='Erro')
+                    sg.popup('Usuário e/ou senha incorretos.',title='Erro', icon=ICON)
 
         window.close()
 
@@ -312,7 +312,10 @@ class Logo:
 class Start:
     def __init__(self):
         Logo()
-        Login()
+        if Select.user_authentication(ADMIN_INFO['user'], ADMIN_INFO['password']) == True:
+            Login()
+        else:
+            sg.popup('Ops! Parece que há divergências entre as informações de administrador no banco de dados, por favor corrija antes de iniciar o aplicativo.', title='Erro', icon=ICON)
 
 
 Start()
