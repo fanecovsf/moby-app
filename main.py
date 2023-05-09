@@ -26,6 +26,8 @@ CARGOS = [
 
 THEME = 'DarkTeal12'
 
+VERSION = 'Versão 0.1'
+
 #Parâmetros
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 if DEVELOPER_MODE == True:
@@ -47,7 +49,7 @@ class UserList:
         #Layout
         layout = [
             [sg.Table(data, headings=header_list, num_rows=20, auto_size_columns=True, enable_events=True, justification='center', key='-TABLE-', max_col_width=25)],
-            [sg.Button('Editar',size=(20,0)),sg.Push(),sg.Button('Sair',size=(20,0))]
+            [sg.Push(),sg.Button('Voltar ao menu',size=(20,0)),sg.Button('Editar',size=(20,0)),sg.Button('Sair',size=(20,0)),sg.Push()]
         ]
 
         #Janela
@@ -248,7 +250,8 @@ class Login:
             [sg.Push(), sg.Text('Bem vindo! Insira o usuário e senha abaixo para realizar o login', pad=(10,10)), sg.Push()],
             [sg.Push(), sg.Text('Usuário:',pad=(10,10)), sg.Input(size=(30,0), key='user'), sg.Push()],
             [sg.Push(), sg.Text('Senha:  ',pad=(10,10)), sg.Input(size=(30,0),key='password', password_char='*'), sg.Push()],
-            [sg.Button('Registro de usuário', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,10), size=(15,0)), sg.Button('Sair', pad=(10,10), size=(15,0))]
+            [sg.Button('Registro de usuário', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,10), size=(15,0)), sg.Button('Sair', pad=(10,10), size=(15,0))],
+            [sg.Text(VERSION)]
         ]
 
         #Janela
@@ -296,7 +299,8 @@ class Logo:
 
         #Layout
         layout = [
-            [sg.Image(LOGO)]
+            [sg.Image(LOGO)],
+            [sg.Text(VERSION)]
         ]
 
         #Janela

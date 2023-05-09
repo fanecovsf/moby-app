@@ -1,6 +1,16 @@
 import psycopg2 as ps
 import pandas as pd
 
+#Database info
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+DATABASE = 'db_powerautomate'
+
+HOST = '4.228.57.67'
+
+USER = 'postgres'
+
+PASSWORD = 'pRxI65oIubsdTlf'
+
 #Classes
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 class Insert:
@@ -13,7 +23,7 @@ class Insert:
         senha = ("'" + senha + "'")
         cargo = ("'" + cargo + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''INSERT INTO sc_aplicativos.app_usuarios (email, usuario, senha, cargo)
@@ -33,7 +43,7 @@ class Select:
     def user_verification(user):
         user = ("'" + user + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
@@ -56,7 +66,7 @@ class Select:
         user = ("'" + user + "'")
         password = ("'" + password + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
@@ -80,7 +90,7 @@ class Select:
         user = ("'" + user + "'")
         password = ("'" + password + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
@@ -103,7 +113,7 @@ class Select:
             return logged_email, logged_user, logged_password, logged_role
         
     def user_list():
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
@@ -122,7 +132,7 @@ class Select:
         user = ("'" + user + "'")
         password = ("'" + password + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
@@ -151,7 +161,7 @@ class Update:
         password = ("'" + password + "'")
         role = ("'" + role + "'")
 
-        con = ps.connect(host='4.228.57.67', database='db_powerautomate', user='postgres', password='pRxI65oIubsdTlf')
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''UPDATE sc_aplicativos.app_usuarios
@@ -164,3 +174,30 @@ class Update:
 
         cur.close()
         con.close()
+
+class TableColumns:
+    def __init__(self):
+        pass
+
+    def table_users():
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'app_usuarios'
+        ORDER BY ordinal_position;
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        result = cur.fetchall()
+
+        column_names = [row[0] for row in result]
+
+        cur.close()
+        con.close()
+
+        return column_names[0]
+    
