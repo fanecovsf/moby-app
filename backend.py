@@ -17,17 +17,16 @@ class Insert:
     def __init__(self):
         pass
 
-    def register(email, usuario, senha, cargo):
+    def register(email, senha, cargo):
         email = ("'" + email + "'")
-        usuario = ("'" + usuario + "'")
         senha = ("'" + senha + "'")
         cargo = ("'" + cargo + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''INSERT INTO sc_aplicativos.app_usuarios (email, usuario, senha, cargo)
-        VALUES ({email}, {usuario}, {senha}, {cargo})
+        command =f'''INSERT INTO sc_aplicativos.app_usuarios (email, senha, cargo)
+        VALUES ({email}, {senha}, {cargo})
         '''
 
         cur.execute(command)
@@ -39,38 +38,16 @@ class Insert:
 class Select:
     def __init__(self):
         pass
-
-    def user_verification(user):
-        user = ("'" + user + "'")
-
-        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
-        cur = con.cursor()
-
-        command =f'''SELECT * FROM sc_aplicativos.app_usuarios
-        WHERE usuario={user}
-        '''
-
-        cur.execute(command)
-        result = cur.fetchone()
-        con.commit()
-
-        cur.close()
-        con.close()
-
-        if result == None:
-            return True
-        else:
-            return False
         
-    def user_authentication(user, password):
-        user = ("'" + user + "'")
+    def login_authentication(email, password):
+        email = ("'" + email + "'")
         password = ("'" + password + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
-        WHERE usuario={user}
+        WHERE email={email}
         AND senha={password}
         '''
 
@@ -86,15 +63,15 @@ class Select:
         else:
             return False
         
-    def user_information(user, password):
-        user = ("'" + user + "'")
+    def user_information(email, password):
+        email = ("'" + email + "'")
         password = ("'" + password + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
-        WHERE usuario={user}
+        WHERE email={email}
         AND senha={password}
         '''
 
@@ -106,11 +83,11 @@ class Select:
         con.close()
 
         if result != None:
-            logged_email, logged_user, logged_password, logged_role = result
-            return logged_email, logged_user, logged_password, logged_role
+            logged_email, logged_password, logged_role = result
+            return logged_email, logged_password, logged_role
         else:
-            logged_email, logged_user, logged_password, logged_role = '', '', '', ''
-            return logged_email, logged_user, logged_password, logged_role
+            logged_email, logged_password, logged_role = '', '', ''
+            return logged_email, logged_password, logged_role
         
     def user_list():
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
@@ -128,15 +105,15 @@ class Select:
 
         return result
     
-    def role_authentication(user, password):
-        user = ("'" + user + "'")
+    def role_authentication(email, password):
+        email = ("'" + email + "'")
         password = ("'" + password + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''SELECT * FROM sc_aplicativos.app_usuarios
-        WHERE usuario = {user}
+        WHERE email = {email}
         AND senha = {password}
         '''
 
@@ -147,17 +124,38 @@ class Select:
         cur.close()
         con.close()
 
-        role = result[3]
+        role = result[2]
 
         return role
+    
+    def email_authentication(email):
+        email = ("'" + email + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT * FROM sc_aplicativos.app_usuarios
+        WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        result = cur.fetchone()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result != None:
+            return True
+        else:
+            return False
 
 class Update:
     def __init__(self):
         pass
 
-    def user_update(email, user, password, role):
+    def user_update(email, password, role):
         email = ("'" + email + "'")
-        user = ("'" + user + "'")
         password = ("'" + password + "'")
         role = ("'" + role + "'")
 
@@ -165,7 +163,7 @@ class Update:
         cur = con.cursor()
 
         command =f'''UPDATE sc_aplicativos.app_usuarios
-        SET email = {email}, usuario = {user}, senha = {password}, cargo = {role}
+        SET senha = {password}, cargo = {role}
         WHERE email = {email}
         '''
 
@@ -200,4 +198,23 @@ class TableColumns:
         con.close()
 
         return column_names[0]
-    
+
+class Delete:
+    def __init__(self):
+        pass
+
+    def delete_user(email):
+        email = ("'" + email + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''DELETE FROM sc_aplicativos.app_usuarios
+        WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()

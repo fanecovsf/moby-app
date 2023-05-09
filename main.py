@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from backend import Insert, Select, Update
+from backend import Insert, Select, Update, Delete
 import pandas as pd
 
 #Configurações
@@ -9,10 +9,9 @@ DEVELOPER_MODE = True
 ADMIN_PASSWORD = 'moby@bi'
 
 ADMIN_INFO = {
-    'user': Select.user_information('admin', ADMIN_PASSWORD)[1],
     'password': ADMIN_PASSWORD,
-    'email': Select.user_information('admin', ADMIN_PASSWORD)[0],
-    'role': Select.user_information('admin', ADMIN_PASSWORD)[3]
+    'email': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[0],
+    'role': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[2]
 }
 
 APP_NAME = 'Moby'
@@ -41,7 +40,7 @@ elif DEVELOPER_MODE == False:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class UserList:
     def __init__(self):
-        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Usuário','Senha','Cargo'])
+        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo'])
         data = df.values.tolist()
         header_list = list(df.columns)
         sg.theme(THEME)
@@ -49,7 +48,7 @@ class UserList:
         #Layout
         layout = [
             [sg.Table(data, headings=header_list, num_rows=20, auto_size_columns=True, enable_events=True, justification='center', key='-TABLE-', max_col_width=25)],
-            [sg.Push(),sg.Button('Voltar ao menu',size=(20,0)),sg.Button('Editar',size=(20,0)),sg.Button('Sair',size=(20,0)),sg.Push()]
+            [sg.Push(),sg.Button('Voltar ao menu',size=(15,0)),sg.Button('Editar',size=(15,0)),sg.Button('Excluir usuário',size=(15,0)),sg.Push()]
         ]
 
         #Janela
@@ -59,22 +58,59 @@ class UserList:
         while True:
             event, self.values = window.read()
 
-            if event == 'Sair' or event == sg.WIN_CLOSED:
+            if event == 'Voltar ao menu':
                 break
 
+            elif event == 'Excluir usuário':
+                try:
+                    row_index = self.values['-TABLE-'][0]
+
+                    selected_data = list(df.iloc[row_index])
+
+                    if selected_data[0] != ADMIN_INFO['email']:
+
+                        exclude_layout = [
+                            [sg.Push(),sg.Text('Digite a palavra EXCLUIR abaixo para confirmar a exclusão do usuário'),sg.Push()],
+                            [sg.Push(), sg.Input(size=(30,0), key='exclude'), sg.Push()],
+                            [sg.Push(), sg.Button('Cancelar',size=(15,0)), sg.Button('Excluir',size=(15,0)), sg.Push()]
+                        ]
+
+                        exclude_window = sg.Window(APP_NAME, exclude_layout, icon=ICON)
+
+                        while True:
+                            exclude_event, exclude_values = exclude_window.read()
+
+                            if exclude_event == 'Excluir':
+                                if exclude_values['exclude'] == 'EXCLUIR':
+                                    Delete.delete_user(selected_data[0])
+                                    sg.popup('Usuário excluído com sucesso', title='Exclusão de usuário', icon=ICON)
+                                    exclude_window.close()
+                                    break
+                                else:
+                                    sg.popup('Incorreto. Verifique a ortografia e se todas as letras estão maiúsculas.')
+
+                            elif exclude_event == sg.WIN_CLOSED or exclude_event == 'Cancelar':
+                                exclude_window.close()
+                                break
+
+                    else:
+                        sg.popup('O usuário de administrador não pode ser excluído.', title='Erro', icon=ICON)
+
+                except:
+                    pass
+
             elif event == 'Editar':
-                row_index = self.values['-TABLE-'][0]
+                try:
+                    row_index = self.values['-TABLE-'][0]
 
-                selected_data = list(df.iloc[row_index])
+                    selected_data = list(df.iloc[row_index])
 
-                if selected_data[1] != 'admin':
-                    try:
+                    if selected_data[0] != ADMIN_INFO['email']:
 
                         edit_layout = [
-                            [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-')],
-                            [sg.Text('Usuário:'), sg.InputText(selected_data[1], key='-USUÁRIO-')],
-                            [sg.Text('Senha:'), sg.InputText(selected_data[2], key='-SENHA-')],
-                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[3], key='-CARGO-')],
+                            [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-', readonly=True)],
+                            [sg.Text('Senha:'), sg.InputText(selected_data[1], key='-SENHA-')],
+                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='-CARGO-')],
                             [sg.Button('Salvar'), sg.Button('Cancelar')]
                         ]
 
@@ -86,19 +122,24 @@ class UserList:
                             if edit_event == sg.WIN_CLOSED or edit_event == 'Cancelar':
                                 edit_window.close()
                                 break
-
+                            
+                            #Ajustar
                             elif edit_event == 'Salvar':
-                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-']]
+                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-']]
 
-                                window['-TABLE-'].update(df.values.tolist())
+                                if selected_data[1] != edit_values['-SENHA-'] or selected_data[2] != edit_values['-CARGO-']:
+                                    window['-TABLE-'].update(df.values.tolist())
+                                    Update.user_update(edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'])
+                                    sg.popup('Informações atualizadas com sucesso!', title='Edição de usuário', icon=ICON)
+                                    edit_window.close()
 
-                                Update.user_update(edit_values['-EMAIL-'], edit_values['-USUÁRIO-'], edit_values['-SENHA-'], edit_values['-CARGO-'])
+                                else:
+                                    edit_window.close() 
 
-                                edit_window.close()
-                    except:
-                        pass
-                elif selected_data[1] == 'admin':
-                    sg.popup('O usuário de administrador não pode ser editado.', title='Erro', icon=ICON)
+                    elif selected_data[0] == ADMIN_INFO['email']:
+                        sg.popup('O usuário de administrador não pode ser editado.', title='Erro', icon=ICON)
+                except:
+                    pass
 
         window.close()
 
@@ -162,7 +203,6 @@ class Register:
         layout = [
             [sg.Push(), sg.Text('Registro de usuário',pad=(10,10)), sg.Push()],
             [sg.Push(), sg.Text('E-mail:                   ',pad=(10,10)), sg.Input(size=(30,0), key='register_email'), sg.Push()],
-            [sg.Push(), sg.Text('Usuário:                  ',pad=(10,10)), sg.Input(size=(30,0), key='register_user'), sg.Push()],
             [sg.Push(), sg.Text('Senha:                    ',pad=(10,10)), sg.Input(size=(30,0), key='register_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Confirme sua senha:',pad=(10,10)), sg.Input(size=(30,0), key='confirm_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Cargo:                    ',pad=(10,10)), sg.Combo(CARGOS, size=(28,0), key='register_cargo', readonly=True), sg.Push()],
@@ -181,19 +221,15 @@ class Register:
             
             elif event == 'Registrar':
                 if self.values['register_email'] != '' \
-                and self.values['register_user'] != '' \
-                and self.values['register_password'] != '' \
-                and self.values['register_cargo'] != '':
+                or self.values['register_password'] != '' \
+                or self.values['register_cargo'] != '':
                     if self.values['register_password'] == self.values['confirm_password']:
                         if '@' in self.values['register_email'] and '.com' in self.values['register_email']:
-                            if Select.user_verification(self.values['register_user']) == True:
-                                try:
-                                    Insert.register(self.values['register_email'],self.values['register_user'],self.values['register_password'],self.values['register_cargo'])
-                                    sg.popup('Usuário registrado com sucesso!', title='Registro de usuário', icon=ICON)
-                                except:
-                                    sg.popup('E-mail já registrado, tente outro endereço.', title='Erro', icon=ICON)
-                            else:
-                                sg.popup('Usuário já registrado, tente outro nome de usuário.', title='Erro', icon=ICON)
+                            try:
+                                Insert.register(self.values['register_email'],self.values['register_user'],self.values['register_password'],self.values['register_cargo'])
+                                sg.popup('Usuário registrado com sucesso!', title='Registro de usuário', icon=ICON)
+                            except:
+                                sg.popup('E-mail já registrado, tente outro endereço.', title='Erro', icon=ICON)
                         else:
                             sg.popup('O endereço de e-mail parece inválido, tente outro endereço.', title='Erro', icon=ICON)
                     else:
@@ -212,7 +248,7 @@ class AdminLogin:
         #Layout
         layout = [
             [sg.Push(), sg.Text('Autenticação', pad=(10,10)), sg.Push()],
-            [sg.Push(), sg.Text('Usuário:',pad=(10,10)), sg.Input(size=(30,0), key='admin_user'), sg.Push()],
+            [sg.Push(), sg.Text('E-mail:',pad=(10,10)), sg.Input(size=(30,0), key='admin_email'), sg.Push()],
             [sg.Push(), sg.Text('Senha:  ',pad=(10,10)), sg.Input(size=(30,0), key='admin_password', password_char='*'), sg.Push()],
             [sg.Button('Voltar', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,0), size=(15,0))]
         ]
@@ -227,8 +263,8 @@ class AdminLogin:
             if event == sg.WIN_CLOSED or event == 'Voltar':
                 break
             elif event == 'Login':
-                if Select.user_authentication(self.values['admin_user'], self.values['admin_password']) == True:
-                    if Select.role_authentication(self.values['admin_user'], self.values['admin_password']) in roles:
+                if Select.login_authentication(self.values['admin_email'], self.values['admin_password']) == True:
+                    if Select.role_authentication(self.values['admin_email'], self.values['admin_password']) in roles:
                         window.close()
                         screen()
                         break
@@ -247,8 +283,8 @@ class Login:
 
         #Layout
         layout = [
-            [sg.Push(), sg.Text('Bem vindo! Insira o usuário e senha abaixo para realizar o login', pad=(10,10)), sg.Push()],
-            [sg.Push(), sg.Text('Usuário:',pad=(10,10)), sg.Input(size=(30,0), key='user'), sg.Push()],
+            [sg.Push(), sg.Text('Bem vindo! Insira o email e senha abaixo para realizar o login', pad=(10,10)), sg.Push()],
+            [sg.Push(), sg.Text('Email:',pad=(10,10)), sg.Input(size=(30,0), key='email'), sg.Push()],
             [sg.Push(), sg.Text('Senha:  ',pad=(10,10)), sg.Input(size=(30,0),key='password', password_char='*'), sg.Push()],
             [sg.Button('Registro de usuário', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,10), size=(15,0)), sg.Button('Sair', pad=(10,10), size=(15,0))],
             [sg.Text(VERSION)]
@@ -260,7 +296,6 @@ class Login:
         #Loop
         while True:
             event, self.values = window.read()
-            global logged_user
             global logged_password
             global logged_email
             global logged_role
@@ -272,22 +307,21 @@ class Login:
                 AdminLogin(['Gestor', 'Supervisor', 'Desenvolvedor'], Register)
 
             elif event == 'Login':
-                if self.values['user'] == ADMIN_INFO['user'] and self.values['password'] == ADMIN_INFO['password']:
-                    logged_user = ADMIN_INFO['user']
+                if self.values['email'] == ADMIN_INFO['email'] and self.values['password'] == ADMIN_INFO['password']:
                     logged_password = ADMIN_INFO['password']
                     logged_email = ADMIN_INFO['email']
                     logged_role = ADMIN_INFO['role']
                     sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
                     window.close()
                     AdmMenu()
-                elif Select.user_authentication(self.values['user'], self.values['password']) == True:
-                    user_info = Select.user_information(self.values['user'], self.values['password'])
-                    logged_email, logged_user, logged_password, logged_role = user_info
+                elif Select.login_authentication(self.values['email'], self.values['password']) == True:
+                    user_info = Select.user_information(self.values['email'], self.values['password'])
+                    logged_email, logged_password, logged_role = user_info
                     sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
                     window.close()
                     PrincipalMenu()
                 else:
-                    sg.popup('Usuário e/ou senha incorretos.',title='Erro', icon=ICON)
+                    sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
 
         window.close()
 
@@ -316,7 +350,7 @@ class Logo:
 class Start:
     def __init__(self):
         Logo()
-        if Select.user_authentication(ADMIN_INFO['user'], ADMIN_INFO['password']) == True:
+        if Select.login_authentication(ADMIN_INFO['email'], ADMIN_INFO['password']) == True:
             Login()
         else:
             sg.popup('Ops! Parece que há divergências entre as informações de administrador no banco de dados, por favor corrija antes de iniciar o aplicativo.', title='Erro', icon=ICON)
