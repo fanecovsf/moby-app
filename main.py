@@ -83,7 +83,7 @@ class ChangePassword:
                             
                             else:
                                 Update.user_update(logged_email, self.value['new_password'], logged_role)
-                                sg.popup('Senha alterada com sucesso!')
+                                sg.popup('Senha alterada com sucesso!', title='Sucesso', icon=ICON)
                                 window.close()
                                 sg.Exit()
 
@@ -238,8 +238,15 @@ class AdmMenu:
     def __init__(self):
         sg.theme(THEME)
 
+        #Menu
+        menu_def = [
+            ['&Módulos', ['&Passagem de turno']],
+            ['&Usuário', ['&Lista de usuários']]
+        ]
+
         #Layout
         layout = [
+            [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
             [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
             [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
@@ -269,8 +276,14 @@ class PrincipalMenu:
     def __init__(self):
         sg.theme(THEME)
 
+        #Menu
+        menu_def = [
+            ['&Módulos', ['&Passagem de turno']],
+        ]
+
         #Layout
         layout = [
+            [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
             [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
             [sg.Button('Alterar senha', pad=(20,40), font=('Arial', 9)), sg.Push()],
