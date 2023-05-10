@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from backend import Insert, Select, Update, Delete, INSTALLED_MODULES
+from Modules.passagem_turno import StartPassagemTurno
 import pandas as pd
 import os
 
@@ -7,7 +8,7 @@ import os
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 DEVELOPER_MODE = True
 
-STATIC_PATH = os.path.dirname(os.path.abspath(__file__)) + '\static'
+STATIC_PATH = os.path.dirname(os.path.abspath(__file__)) + '\Static'
 
 ICON = STATIC_PATH + '\Símbolo.ico'
 
@@ -26,13 +27,65 @@ APP_NAME = 'Moby'
 CARGOS = [
     'Assistente',
     'Analista',
-    'Supervisor',
+    'Líder',
     'Gestor'
 ]
 
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.1'
+VERSION = 'Versão 0.12'
+
+#Telas
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Troca de senha
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class ChangePassword:
+    def __init__(self):
+        sg.theme(THEME)
+
+        #Layout
+        layout = [
+            [sg.Push(), sg.Text('Senha antiga:              ',pad=(10,10)), sg.Input(size=(30,0),key='old_password', password_char='*'), sg.Push()],
+            [sg.Push(), sg.Text('Nova senha:                ',pad=(10,10)), sg.Input(size=(30,0),key='new_password', password_char='*'), sg.Push()],
+            [sg.Push(), sg.Text('Confirme a nova senha:',pad=(10,10)), sg.Input(size=(30,0),key='new_password2', password_char='*'), sg.Push()],
+            [sg.Button('Cancelar', pad=(10,15), size=(15,0)), sg.Push(), sg.Button('Confirmar mudança', pad=(10,0), size=(15,0))]
+        ]
+
+        #Janela
+        window = sg.Window(APP_NAME, layout, icon=ICON)
+
+        #Loop
+        while True:
+            event, self.value = window.read()
+
+            if event == sg.WIN_CLOSED or event == 'Cancelar':
+                break
+
+            elif event == 'Confirmar mudança':
+
+                if self.value['old_password'] == '' or \
+                self.value['new_password'] == '' or \
+                self.value['new_password2'] == '':
+                    sg.popup('Preencha todos os campos.', title='Erro', icon=ICON)
+
+                else:
+                    if self.value['new_password'] != self.value['new_password2']:
+                        sg.popup('As senhas devem ser iguais.', title='Erro', icon=ICON)
+
+                    else:
+                        if self.value['old_password'] == self.value['new_password']:
+                            sg.popup('A nova senha digitada é igual a sua senha antiga, tente outra.', title='Erro', icon=ICON)
+
+                        else:
+                            if self.value['old_password'] != logged_password:
+                                sg.popup('A senha antiga digitada não confere.', title='Erro', icon=ICON)
+                            
+                            else:
+                                Update.user_update(logged_email, self.value['new_password'], logged_role)
+                                sg.popup('Senha alterada com sucesso!')
+                                window.close()
+                                sg.Exit()
 
 #Lista de usuários
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -205,6 +258,9 @@ class AdmMenu:
             elif event == 'Lista de usuários':
                 UserList()
 
+            elif event == 'Passagem de turno':
+                StartPassagemTurno()
+
         window.close()
 
 #Menu
@@ -217,6 +273,7 @@ class PrincipalMenu:
         layout = [
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
             [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Button('Alterar senha', pad=(20,40), font=('Arial', 9)), sg.Push()],
         ]
 
         #Janela
@@ -228,6 +285,16 @@ class PrincipalMenu:
 
             if event == sg.WIN_CLOSED:
                 break
+
+            elif event == 'Passagem de turno':
+                if event in Select.modules_information(logged_email):
+                    StartPassagemTurno()
+
+                else:
+                    sg.popup('Você não tem acesso a este módulo, solicite acesso ao supervisor ou ao administrador da área.', title='Erro', icon=ICON)
+
+            elif event == 'Alterar senha':
+                ChangePassword()
 
         window.close()
 
@@ -343,26 +410,47 @@ class Login:
                 break
 
             elif event == 'Registro de usuário':
-                AdminLogin(['Gestor', 'Supervisor', 'Desenvolvedor'], Register)
+                AdminLogin(['Gestor', 'Líder', 'Desenvolvedor'], Register)
 
             elif event == 'Login':
-                if self.values['email'] == ADMIN_INFO['email'] and self.values['password'] == ADMIN_INFO['password']:
-                    logged_password = ADMIN_INFO['password']
-                    logged_email = ADMIN_INFO['email']
-                    logged_role = ADMIN_INFO['role']
-                    Update.last_login(logged_email)
-                    sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
-                    window.close()
-                    AdmMenu()
-                elif Select.login_authentication(self.values['email'], self.values['password']) == True:
-                    user_info = Select.user_information(self.values['email'], self.values['password'])
-                    logged_email, logged_password, logged_role, last_login = user_info
-                    Update.last_login(logged_email)
-                    sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
-                    window.close()
-                    PrincipalMenu()
+                if '@' not in self.values['email']:
+                    login_email = self.values['email'] + '@mobyweb.com.br'
+                    if login_email == ADMIN_INFO['email'] and self.values['password'] == ADMIN_INFO['password']:
+                        logged_password = ADMIN_INFO['password']
+                        logged_email = ADMIN_INFO['email']
+                        logged_role = ADMIN_INFO['role']
+                        Update.last_login(logged_email)
+                        sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
+                        window.close()
+                        AdmMenu()
+                    elif Select.login_authentication(login_email, self.values['password']) == True:
+                        user_info = Select.user_information(login_email, self.values['password'])
+                        logged_email, logged_password, logged_role, last_login = user_info
+                        Update.last_login(logged_email)
+                        sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
+                        window.close()
+                        PrincipalMenu()
+                    else:
+                        sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
+
                 else:
-                    sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
+                    if self.values['email'] == ADMIN_INFO['email'] and self.values['password'] == ADMIN_INFO['password']:
+                        logged_password = ADMIN_INFO['password']
+                        logged_email = ADMIN_INFO['email']
+                        logged_role = ADMIN_INFO['role']
+                        Update.last_login(logged_email)
+                        sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
+                        window.close()
+                        AdmMenu()
+                    elif Select.login_authentication(self.values['email'], self.values['password']) == True:
+                        user_info = Select.user_information(self.values['email'], self.values['password'])
+                        logged_email, logged_password, logged_role, last_login = user_info
+                        Update.last_login(logged_email)
+                        sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
+                        window.close()
+                        PrincipalMenu()
+                    else:
+                        sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
 
         window.close()
 
