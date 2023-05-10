@@ -1,5 +1,6 @@
 import psycopg2 as ps
 import pandas as pd
+import os
 
 #Database info
 #-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10,6 +11,10 @@ HOST = '4.228.57.67'
 USER = 'postgres'
 
 PASSWORD = 'pRxI65oIubsdTlf'
+
+INSTALLED_MODULES = [
+    'Passagem de turno',
+]
 
 #Classes
 #-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,11 +88,11 @@ class Select:
         con.close()
 
         if result != None:
-            logged_email, logged_password, logged_role = result
-            return logged_email, logged_password, logged_role
+            logged_email, logged_password, logged_role, last_login = result
+            return logged_email, logged_password, logged_role, last_login
         else:
-            logged_email, logged_password, logged_role = '', '', ''
-            return logged_email, logged_password, logged_role
+            logged_email, logged_password, logged_role, last_login = '', '', '', ''
+            return logged_email, logged_password, logged_role, last_login
         
     def user_list():
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
@@ -177,7 +182,7 @@ class TableColumns:
     def __init__(self):
         pass
 
-    def table_users():
+    def columns_users():
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 

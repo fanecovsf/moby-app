@@ -1,10 +1,17 @@
 import PySimpleGUI as sg
-from backend import Insert, Select, Update, Delete
+from backend import Insert, Select, Update, Delete, INSTALLED_MODULES
 import pandas as pd
+import os
 
 #Configurações
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 DEVELOPER_MODE = True
+
+STATIC_PATH = os.path.dirname(os.path.abspath(__file__)) + '\static'
+
+ICON = STATIC_PATH + '\Símbolo.ico'
+
+LOGO = STATIC_PATH + '\logo.png'
 
 ADMIN_PASSWORD = 'moby@bi'
 
@@ -27,20 +34,11 @@ THEME = 'DarkTeal12'
 
 VERSION = 'Versão 0.1'
 
-#Parâmetros
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-if DEVELOPER_MODE == True:
-    ICON = r'C:\Users\gustavo.faneco\OneDrive - MOBY\Documents\Projects\Python\Aplicativos\Demo\static\Símbolo.ico'
-    LOGO = r'C:\Users\gustavo.faneco\OneDrive - MOBY\Documents\Projects\Python\Aplicativos\Demo\static\logo.png'
-elif DEVELOPER_MODE == False:
-    ICON = 'Símbolo.ico'
-    LOGO = 'logo.png'
-
 #Lista de usuários
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class UserList:
     def __init__(self):
-        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo'])
+        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo','Último login'])
         data = df.values.tolist()
         header_list = list(df.columns)
         sg.theme(THEME)
@@ -58,7 +56,7 @@ class UserList:
         while True:
             event, self.values = window.read()
 
-            if event == 'Voltar ao menu':
+            if event == 'Voltar ao menu' or event == sg.WIN_CLOSED:
                 break
 
             elif event == 'Excluir usuário':
@@ -105,12 +103,33 @@ class UserList:
 
                     selected_data = list(df.iloc[row_index])
 
+                    module_values = {
+                        module: False for module in INSTALLED_MODULES
+                    }
+
                     if selected_data[0] != ADMIN_INFO['email']:
 
-                        edit_layout = [
+                        edit_tab1_layout = [
                             [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-', readonly=True)],
                             [sg.Text('Senha:'), sg.InputText(selected_data[1], key='-SENHA-')],
                             [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='-CARGO-')],
+                            [sg.Text('Último login:'), sg.InputText(selected_data[3], key='-LASTL-', readonly=True, size=(20,0))]
+                        ]
+
+                        edit_tab2_layout = [
+                            [
+                                sg.Frame('Módulos', [
+                                    [sg.Column(
+                                            [[sg.Checkbox(module, key='module')] for module in INSTALLED_MODULES],
+                                            scrollable=True, vertical_scroll_only=True, size=(350,150)
+                                        )
+                                    ]
+                                ])
+                            ]
+                        ]
+
+                        edit_layout = [
+                            [sg.TabGroup([[sg.Tab('Informações', edit_tab1_layout), sg.Tab('Módulos', edit_tab2_layout)]])],
                             [sg.Button('Salvar'), sg.Button('Cancelar')]
                         ]
 
@@ -123,9 +142,8 @@ class UserList:
                                 edit_window.close()
                                 break
                             
-                            #Ajustar
                             elif edit_event == 'Salvar':
-                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-']]
+                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'], edit_values['-LASTL-']]
 
                                 if selected_data[1] != edit_values['-SENHA-'] or selected_data[2] != edit_values['-CARGO-']:
                                     window['-TABLE-'].update(df.values.tolist())
@@ -284,7 +302,7 @@ class Login:
         #Layout
         layout = [
             [sg.Push(), sg.Text('Bem vindo! Insira o email e senha abaixo para realizar o login', pad=(10,10)), sg.Push()],
-            [sg.Push(), sg.Text('Email:',pad=(10,10)), sg.Input(size=(30,0), key='email'), sg.Push()],
+            [sg.Push(), sg.Text('Email:   ',pad=(10,10)), sg.Input(size=(30,0), key='email'), sg.Push()],
             [sg.Push(), sg.Text('Senha:  ',pad=(10,10)), sg.Input(size=(30,0),key='password', password_char='*'), sg.Push()],
             [sg.Button('Registro de usuário', pad=(10,15), size=(15,0)), sg.Button('Login', pad=(10,10), size=(15,0)), sg.Button('Sair', pad=(10,10), size=(15,0))],
             [sg.Text(VERSION)]
@@ -356,4 +374,4 @@ class Start:
             sg.popup('Ops! Parece que há divergências entre as informações de administrador no banco de dados, por favor corrija antes de iniciar o aplicativo.', title='Erro', icon=ICON)
 
 
-Start()
+UserList()
