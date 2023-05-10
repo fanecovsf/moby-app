@@ -103,24 +103,33 @@ class UserList:
 
                     selected_data = list(df.iloc[row_index])
 
-                    module_values = {
-                        module: False for module in INSTALLED_MODULES
-                    }
+                    checkboxes = []
+
+                    actual_modules = Select.modules_information(selected_data[0])
+
+                    for modulo in INSTALLED_MODULES:
+
+                        if modulo in actual_modules:
+                            checkboxes.append([sg.Checkbox(modulo, key=modulo, default=True)],)
+
+                        else:
+                            checkboxes.append([sg.Checkbox(modulo, key=modulo, default=False)],)
+
 
                     if selected_data[0] != ADMIN_INFO['email']:
 
                         edit_tab1_layout = [
-                            [sg.Text('E-mail:'), sg.InputText(selected_data[0], key='-EMAIL-', readonly=True)],
-                            [sg.Text('Senha:'), sg.InputText(selected_data[1], key='-SENHA-')],
-                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='-CARGO-')],
-                            [sg.Text('Último login:'), sg.InputText(selected_data[3], key='-LASTL-', readonly=True, size=(20,0))]
+                            [sg.Text('E-mail:'), sg.Text(selected_data[0], key='email')],
+                            [sg.Text('Senha:'), sg.InputText(selected_data[1], key='senha')],
+                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='cargo')],
+                            [sg.Text('Último login:'), sg.Text(selected_data[3], key='ultimo_login', size=(20,0))]
                         ]
 
                         edit_tab2_layout = [
                             [
                                 sg.Frame('Módulos', [
                                     [sg.Column(
-                                            [[sg.Checkbox(module, key='module')] for module in INSTALLED_MODULES],
+                                            checkboxes,
                                             scrollable=True, vertical_scroll_only=True, size=(350,150)
                                         )
                                     ]
@@ -143,16 +152,25 @@ class UserList:
                                 break
                             
                             elif edit_event == 'Salvar':
-                                df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'], edit_values['-LASTL-']]
+                                try:
+                                    modules_list = []
 
-                                if selected_data[1] != edit_values['-SENHA-'] or selected_data[2] != edit_values['-CARGO-']:
+                                    for i in INSTALLED_MODULES:
+                                        if edit_values[i] == True:
+                                            modules_list.append(i)
+
+                                    
+                                    Update.modules_update(selected_data[0], modules_list)
+                                    Update.user_update(selected_data[0], selected_data[1], selected_data[2])
+
+                                    #df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'], edit_values['-LASTL-']]
                                     window['-TABLE-'].update(df.values.tolist())
-                                    Update.user_update(edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'])
+        
                                     sg.popup('Informações atualizadas com sucesso!', title='Edição de usuário', icon=ICON)
                                     edit_window.close()
 
-                                else:
-                                    edit_window.close() 
+                                except:
+                                    pass                       
 
                     elif selected_data[0] == ADMIN_INFO['email']:
                         sg.popup('O usuário de administrador não pode ser editado.', title='Erro', icon=ICON)
@@ -170,7 +188,8 @@ class AdmMenu:
         #Layout
         layout = [
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Lista de usuários', pad=(10,10)), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
         ]
 
         #Janela
@@ -197,6 +216,7 @@ class PrincipalMenu:
         #Layout
         layout = [
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
+            [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
         ]
 
         #Janela
@@ -317,6 +337,7 @@ class Login:
             global logged_password
             global logged_email
             global logged_role
+            global last_login
 
             if event == sg.WIN_CLOSED or event == 'Sair':
                 break
@@ -329,12 +350,14 @@ class Login:
                     logged_password = ADMIN_INFO['password']
                     logged_email = ADMIN_INFO['email']
                     logged_role = ADMIN_INFO['role']
+                    Update.last_login(logged_email)
                     sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
                     window.close()
                     AdmMenu()
                 elif Select.login_authentication(self.values['email'], self.values['password']) == True:
                     user_info = Select.user_information(self.values['email'], self.values['password'])
-                    logged_email, logged_password, logged_role = user_info
+                    logged_email, logged_password, logged_role, last_login = user_info
+                    Update.last_login(logged_email)
                     sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
                     window.close()
                     PrincipalMenu()
@@ -368,10 +391,11 @@ class Logo:
 class Start:
     def __init__(self):
         Logo()
+        Update.modules_update(ADMIN_INFO['email'], INSTALLED_MODULES)
         if Select.login_authentication(ADMIN_INFO['email'], ADMIN_INFO['password']) == True:
             Login()
         else:
             sg.popup('Ops! Parece que há divergências entre as informações de administrador no banco de dados, por favor corrija antes de iniciar o aplicativo.', title='Erro', icon=ICON)
 
 
-UserList()
+Start()

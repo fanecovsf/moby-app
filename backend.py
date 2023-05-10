@@ -1,6 +1,5 @@
 import psycopg2 as ps
-import pandas as pd
-import os
+import datetime
 
 #Database info
 #-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -38,7 +37,7 @@ class Insert:
         con.commit()
 
         cur.close()
-        con.close()
+        con.close()     
 
 class Select:
     def __init__(self):
@@ -88,7 +87,7 @@ class Select:
         con.close()
 
         if result != None:
-            logged_email, logged_password, logged_role, last_login = result
+            logged_email, logged_password, logged_role, last_login = result[:4]
             return logged_email, logged_password, logged_role, last_login
         else:
             logged_email, logged_password, logged_role, last_login = '', '', '', ''
@@ -98,7 +97,7 @@ class Select:
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''SELECT * FROM sc_aplicativos.app_usuarios
+        command =f'''SELECT email, senha, cargo, ultimo_login FROM sc_aplicativos.app_usuarios
         '''
 
         cur.execute(command)
@@ -154,7 +153,32 @@ class Select:
             return True
         else:
             return False
+        
+    def modules_information(email):
+        email = ("'" + email + "'")
+        
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
 
+        command =f'''SELECT modulos
+        FROM sc_aplicativos.app_usuarios
+        WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        result = cur.fetchone()
+
+        cur.close()
+        con.close()
+        
+        try:
+            lista = [str(item) for sublist in result for item in sublist]
+            return lista
+        except:
+            return []
+        
 class Update:
     def __init__(self):
         pass
@@ -173,6 +197,55 @@ class Update:
         '''
 
         cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def last_login(email):
+        email = ("'" + email + "'")
+
+        hour = datetime.datetime.now()
+        hour = str(hour)
+        input_hour = hour.split('.')[0]
+        input_hour = ("'" + input_hour + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''UPDATE sc_aplicativos.app_usuarios
+        SET ultimo_login = {input_hour}
+        WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def modules_update(email, modules_list):
+        email = ("'" + email + "'")
+        array = f"ARRAY{modules_list}"
+        
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''UPDATE sc_aplicativos.app_usuarios
+        SET modulos = {array}
+        WHERE email = {email}
+        '''
+
+        command2 =f'''UPDATE sc_aplicativos.app_usuarios
+        SET modulos = Null
+        WHERE email = {email}
+        '''
+
+        if modules_list == []:
+            cur.execute(command2)
+        else:
+            cur.execute(command)
+
         con.commit()
 
         cur.close()
