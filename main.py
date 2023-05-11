@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 from backend import Insert, Select, Update, Delete, INSTALLED_MODULES
-from Modules.passagem_turno import StartPassagemTurno
+from Modules.registro_turno import StartPassagemTurno
 import pandas as pd
 import os
 
@@ -19,7 +19,8 @@ ADMIN_PASSWORD = 'moby@bi'
 ADMIN_INFO = {
     'password': ADMIN_PASSWORD,
     'email': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[0],
-    'role': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[2]
+    'role': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[2],
+    'projeto': 'all'
 }
 
 APP_NAME = 'Moby'
@@ -31,12 +32,196 @@ CARGOS = [
     'Gestor'
 ]
 
+LISTA_PROJETOS = [item for tuple in Select.projects_list() for item in tuple]
+
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.12'
+VERSION = 'Versão 0.13'
 
 #Telas
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Cadastro de torres
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class TowersRegister:
+    def __init__(self):
+        sg.theme(THEME)
+
+        #Layout
+        layout = [
+            [sg.Push(), sg.Text('Cadastro de torre',pad=(10,10)), sg.Push()],
+            [sg.Push(), sg.Text('Número:',pad=(10,10), justification='left'), sg.Input(size=(30,0), key='tower_number'), sg.Push()],
+            [sg.Push(), sg.Text('Projeto:',pad=(10,10), justification='left'), sg.Combo(LISTA_PROJETOS,size=(30,0), key='tower_project', readonly=True), sg.Push()],
+            [sg.Push(), sg.Text('Código da torre (opcional): ',pad=(10,10), justification='left'), sg.Input(size=(30,0), key='cod_tower'), sg.Push()],
+            [sg.Button('Cancelar', pad=(10,15), size=(15,0)), sg.Push(), sg.Button('Cadastrar', pad=(10,0), size=(15,0))]
+        ]
+
+        #Janela
+        window = sg.Window(APP_NAME, layout, icon=ICON)
+
+        #Loop
+        while True:
+            event, self.values = window.read()
+
+            if event == sg.WIN_CLOSED or event == 'Cancelar':
+                window.close()
+                break
+
+            elif event == 'Cadastrar':
+                chave = f"{self.values['tower_number']}-{self.values['tower_project']}"
+            
+                if Select.tower_authentication(chave) == True:
+                    sg.popup('Torre já existente.', title='Erro', icon=ICON)
+
+                else:
+                    for i in self.values['tower_number']:
+                        if i not in '1234567890':
+                            sg.popup('O campo "Número" só pode ser preenchido com números, e deve ser um número inteiro (Sem ponto nem vírgula).', title='Erro', icon=ICON)
+                        else:
+                            
+                            if self.values['tower_number'] == '' \
+                            or self.values['tower_project'] == '':
+                                sg.popup('Todos os campos devem estar preenchidos.', title='Erro', icon=ICON)
+
+                            else:
+                                if self.values['cod_tower'] == '':
+                                    codigo_torre = 'NULL'
+
+                                else:
+                                    codigo_torre = self.values['cod_tower']
+                                
+                                Insert.add_tower(self.values['tower_number'], self.values['tower_project'], codigo_torre)
+                                sg.popup('Torre cadastrada com sucesso!', title='Sucesso', icon=ICON)
+                                window.close()
+                                break
+
+#Torres
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class Towers:
+    def __init__(self):
+        df = pd.DataFrame(Select.towers_list(), columns=['Número', 'Projeto', 'Código da torre'])
+
+        data = df.values.tolist()
+        header_list = list(df.columns)
+
+        sg.theme(THEME)
+
+        #Layout
+        layout = [
+            [sg.Table(data, headings=header_list, num_rows=20, auto_size_columns=False, enable_events=True, justification='center', key='-TABLE-', max_col_width=45, def_col_width=20)],
+            [sg.Push(),sg.Button('Voltar ao menu',size=(15,0)),sg.Button('Cadastrar torre',size=(15,0)),sg.Button('Excluir torre',size=(15,0)),sg.Push()]
+        ]
+
+        #Janela
+        window = sg.Window(APP_NAME, layout, icon=ICON, resizable=True)
+
+        while True:
+            event, self.values = window.read()
+
+            try:
+                row_index = self.values['-TABLE-'][0]
+                selected_data = list(df.iloc[row_index])
+            except:
+                pass
+
+            if event == sg.WIN_CLOSED or event == 'Voltar ao menu':
+                window.close()
+                break
+
+            elif event == 'Cadastrar torre':
+                TowersRegister()
+
+                df = pd.DataFrame(Select.towers_list(), columns=['Número', 'Projeto', 'Código da torre'])
+
+                data = df.values.tolist()
+                header_list = list(df.columns)
+                window['-TABLE-'].update(df.values.tolist())
+
+            elif event == 'Excluir torre':
+                try:
+                    ch = sg.popup_ok_cancel(f'Deseja mesmo deletar a Torre {selected_data[0]} do projeto {selected_data[1]}?', title='Confirmação', icon=ICON)
+
+                    if ch == 'OK':
+                        Delete.delete_tower(selected_data[0], selected_data[1])
+                        df = pd.DataFrame(Select.towers_list(), columns=['Número', 'Projeto', 'Código da torre'])
+                        window['-TABLE-'].update(df.values.tolist())
+                        sg.popup('Torre deletada.', title='Deletado', icon=ICON)
+
+                    elif ch == 'Cancel':
+                        pass
+                
+                except:
+                    pass
+
+#Projetos
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class Projects:
+    def __init__(self):
+        df = pd.DataFrame(Select.projects_list(), columns=['Projetos'])
+
+        data = df.values.tolist()
+        header_list = list(df.columns)
+
+        sg.theme(THEME)
+
+        #Layout
+        layout = [
+            [sg.Text('Adicionar projeto:'), sg.Input(size=(40,0), key='-PROJECT-')],
+            [sg.Table(data, headings=header_list, num_rows=20, auto_size_columns=False, enable_events=True, justification='left', key='-TABLE-', max_col_width=45, def_col_width=45)],
+            [sg.Push(),sg.Button('Voltar ao menu',size=(15,0)),sg.Button('Adicionar projeto',size=(15,0)),sg.Button('Excluir projeto',size=(15,0)),sg.Push()]
+        ]
+
+        #Janela
+        window = sg.Window(APP_NAME, layout, icon=ICON, resizable=True)
+
+        while True:
+            event, self.values = window.read()
+
+            try:
+                row_index = self.values['-TABLE-'][0]
+                selected_data = list(df.iloc[row_index])
+            except:
+                pass
+
+            if event == sg.WIN_CLOSED or event == 'Voltar ao menu':
+                window.close()
+                break
+
+            elif event == 'Adicionar projeto':
+                try:
+                    if self.values['-PROJECT-'] != '':
+                        ch = sg.popup_ok_cancel(f'Deseja realmente cadastrar o projeto {self.values["-PROJECT-"]}?', title='Confirme', icon=ICON)
+                        if ch == 'OK':
+                            Insert.add_project(self.values['-PROJECT-'])
+                            new_row = {'Projetos': self.values['-PROJECT-']}
+                            df.loc[len(df)] = new_row
+                            window['-TABLE-'].update(df.values.tolist())
+                            sg.popup('Projeto adicionado!', title='Sucesso', icon=ICON)
+
+                        elif ch == 'Cancel':
+                            pass
+
+                    else:
+                        sg.popup('Digite o nome do projeto.', title='Erro', icon=ICON)
+
+                except:
+                    sg.popup('Projeto já existente.', title='Erro', icon=ICON)
+
+            elif event == 'Excluir projeto':
+                try:
+                    ch = sg.popup_ok_cancel(f'Deseja mesmo deletar o projeto {selected_data[0]}?', title='Confirmação', icon=ICON)
+
+                    if ch == 'OK':
+                        Delete.delete_project(selected_data[0])
+                        df = pd.DataFrame(Select.projects_list(), columns=['Projetos'])
+                        window['-TABLE-'].update(df.values.tolist())
+                        sg.popup('Projeto deletado.', title='Deletado', icon=ICON)
+
+                    elif ch == 'Cancel':
+                        pass
+
+                except:
+                    pass
 
 #Troca de senha
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -91,7 +276,13 @@ class ChangePassword:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class UserList:
     def __init__(self):
-        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo','Último login'])
+        df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo','Último login','Projeto'])
+
+        if logged_role == 'Gestor' or logged_role == 'Líder':
+            df['Senha'] = df['Senha'].apply(lambda x: '*' * len(x))
+        else:
+            pass
+
         data = df.values.tolist()
         header_list = list(df.columns)
         sg.theme(THEME)
@@ -132,8 +323,15 @@ class UserList:
                             exclude_event, exclude_values = exclude_window.read()
 
                             if exclude_event == 'Excluir':
+                                try:
+                                    row_index = self.values['-TABLE-'][0]
+                                    selected_data = list(df.iloc[row_index])
+                                except:
+                                    pass
                                 if exclude_values['exclude'] == 'EXCLUIR':
                                     Delete.delete_user(selected_data[0])
+                                    df = pd.DataFrame(Select.user_list(), columns=['E-mail','Senha','Cargo','Último login','Projeto'])
+                                    window['-TABLE-'].update(df.values.tolist())
                                     sg.popup('Usuário excluído com sucesso', title='Exclusão de usuário', icon=ICON)
                                     exclude_window.close()
                                     break
@@ -152,6 +350,10 @@ class UserList:
 
             elif event == 'Editar':
                 try:
+                    df_projetos = pd.DataFrame(Select.projects_list(), columns=['Projetos'])
+
+                    df_lista = df_projetos.values.tolist()
+
                     row_index = self.values['-TABLE-'][0]
 
                     selected_data = list(df.iloc[row_index])
@@ -172,10 +374,19 @@ class UserList:
                     if selected_data[0] != ADMIN_INFO['email']:
 
                         edit_tab1_layout = [
-                            [sg.Text('E-mail:'), sg.Text(selected_data[0], key='email')],
-                            [sg.Text('Senha:'), sg.InputText(selected_data[1], key='senha')],
-                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='cargo')],
-                            [sg.Text('Último login:'), sg.Text(selected_data[3], key='ultimo_login', size=(20,0))]
+                            [sg.Text('E-mail:'), sg.Text(selected_data[0], key='-EMAIL-')],
+                            [sg.Text('Senha:'), sg.Text(selected_data[1], key='-SENHA-')],
+                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='-CARGO-')],
+                            [sg.Text('Último login:'), sg.Text(selected_data[3], key='-LASTL-', size=(20,0))],
+                            [sg.Text('Projeto:'), sg.InputCombo(df_lista, selected_data[4], key='-PROJETO-')]
+                        ]
+
+                        edit_tab1_layout_adm = [
+                            [sg.Text('E-mail:'), sg.Text(selected_data[0], key='-EMAIL-')],
+                            [sg.Text('Senha:'), sg.InputText(selected_data[1], key='-SENHA-')],
+                            [sg.Text('Cargo:'), sg.InputCombo(CARGOS, selected_data[2], key='-CARGO-')],
+                            [sg.Text('Último login:'), sg.Text(selected_data[3], key='-LASTL-', size=(20,0))],
+                            [sg.Text('Projeto:'), sg.InputCombo(df_lista, selected_data[4], key='-PROJETO-')]
                         ]
 
                         edit_tab2_layout = [
@@ -190,10 +401,17 @@ class UserList:
                             ]
                         ]
 
-                        edit_layout = [
-                            [sg.TabGroup([[sg.Tab('Informações', edit_tab1_layout), sg.Tab('Módulos', edit_tab2_layout)]])],
-                            [sg.Button('Salvar'), sg.Button('Cancelar')]
-                        ]
+                        if logged_role == 'Gestor' or logged_role == 'Líder':
+                            edit_layout = [
+                                [sg.TabGroup([[sg.Tab('Informações', edit_tab1_layout), sg.Tab('Módulos', edit_tab2_layout)]])],
+                                [sg.Button('Salvar'), sg.Button('Cancelar')]
+                            ]
+
+                        else:
+                            edit_layout = [
+                                [sg.TabGroup([[sg.Tab('Informações', edit_tab1_layout_adm), sg.Tab('Módulos', edit_tab2_layout)]])],
+                                [sg.Button('Salvar'), sg.Button('Cancelar')]
+                            ]
 
                         edit_window = sg.Window(APP_NAME, edit_layout, icon=ICON)
 
@@ -206,23 +424,31 @@ class UserList:
                             
                             elif edit_event == 'Salvar':
                                 try:
+                                    projeto_novo = ''.join(edit_values['-PROJETO-'])
                                     modules_list = []
 
                                     for i in INSTALLED_MODULES:
                                         if edit_values[i] == True:
                                             modules_list.append(i)
-
-                                    
+                                        
                                     Update.modules_update(selected_data[0], modules_list)
-                                    Update.user_update(selected_data[0], selected_data[1], selected_data[2])
+                                        
+                                    if logged_role == 'Desenvolvedor':
+                                        Update.user_update(selected_data[0], edit_values['-SENHA-'], edit_values['-CARGO-'], projeto_novo)
+                                        pass
 
-                                    #df.iloc[row_index] = [edit_values['-EMAIL-'], edit_values['-SENHA-'], edit_values['-CARGO-'], edit_values['-LASTL-']]
+                                    else:
+                                        Update.role_project_update(selected_data[0], edit_values['-CARGO-'], projeto_novo)
+                                        pass
+                                        
+                                    df.iloc[row_index] = [selected_data[0], selected_data[1], edit_values['-CARGO-'], selected_data[3], projeto_novo]
                                     window['-TABLE-'].update(df.values.tolist())
-        
+            
                                     sg.popup('Informações atualizadas com sucesso!', title='Edição de usuário', icon=ICON)
                                     edit_window.close()
 
-                                except:
+                                except Exception as e:
+                                    print(e)
                                     pass                       
 
                     elif selected_data[0] == ADMIN_INFO['email']:
@@ -232,16 +458,17 @@ class UserList:
 
         window.close()
 
-#Menu ADM
+#Menu Líder/Gestor
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-class AdmMenu:
+class ManagerMenu:
     def __init__(self):
         sg.theme(THEME)
 
         #Menu
         menu_def = [
-            ['&Módulos', ['&Passagem de turno']],
-            ['&Usuário', ['&Lista de usuários']]
+            ['&Módulos', ['&Registro de turno']],
+            ['&Usuário', ['&Lista de usuários']],
+            ['&Opções', ['&Cadastro de projetos']]
         ]
 
         #Layout
@@ -249,7 +476,7 @@ class AdmMenu:
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
             [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
-            [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
         ]
 
         #Janela
@@ -265,8 +492,59 @@ class AdmMenu:
             elif event == 'Lista de usuários':
                 UserList()
 
-            elif event == 'Passagem de turno':
-                StartPassagemTurno()
+            elif event == 'Registro de turno':
+                StartPassagemTurno(logged_email, logged_password)
+
+            elif event == 'Cadastro de projetos':
+                Projects()
+
+            elif event == 'Cadastro de torres':
+                Towers()
+
+        window.close()
+
+#Menu ADM
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class AdmMenu:
+    def __init__(self):
+        sg.theme(THEME)
+
+        #Menu
+        menu_def = [
+            ['&Módulos', ['&Registro de turno']],
+            ['&Usuário', ['&Lista de usuários']],
+            ['&Opções', ['&Cadastro de projetos', '&Cadastro de torres']]
+        ]
+
+        #Layout
+        layout = [
+            [sg.Menu(menu_def, key='-MENUBAR-')],
+            [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
+        ]
+
+        #Janela
+        window = sg.Window(APP_NAME, layout, icon=ICON, size=(400,200))
+
+        #Loop
+        while True:
+            event, self.values = window.read()
+
+            if event == sg.WIN_CLOSED:
+                break
+
+            elif event == 'Lista de usuários':
+                UserList()
+
+            elif event == 'Registro de turno':
+                StartPassagemTurno(logged_email, logged_password)
+
+            elif event == 'Cadastro de projetos':
+                Projects()
+
+            elif event == 'Cadastro de torres':
+                Towers()
 
         window.close()
 
@@ -278,15 +556,16 @@ class PrincipalMenu:
 
         #Menu
         menu_def = [
-            ['&Módulos', ['&Passagem de turno']],
+            ['&Módulos', ['&Registro de turno']],
+            ['&Opções', ['&Alterar senha']]
         ]
 
         #Layout
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Passagem de turno', pad=(10,10), size=(30,0)), sg.Push()],
-            [sg.Button('Alterar senha', pad=(20,40), font=('Arial', 9)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
+            #[sg.Button('Alterar senha', pad=(20,40), font=('Arial', 9)), sg.Push()],
         ]
 
         #Janela
@@ -299,9 +578,9 @@ class PrincipalMenu:
             if event == sg.WIN_CLOSED:
                 break
 
-            elif event == 'Passagem de turno':
+            elif event == 'Registro de turno':
                 if event in Select.modules_information(logged_email):
-                    StartPassagemTurno()
+                    StartPassagemTurno(logged_email, logged_password)
 
                 else:
                     sg.popup('Você não tem acesso a este módulo, solicite acesso ao supervisor ou ao administrador da área.', title='Erro', icon=ICON)
@@ -315,6 +594,7 @@ class PrincipalMenu:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class Register:
     def __init__(self):
+
         sg.theme(THEME)
 
         #Layout
@@ -324,6 +604,7 @@ class Register:
             [sg.Push(), sg.Text('Senha:                    ',pad=(10,10)), sg.Input(size=(30,0), key='register_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Confirme sua senha:',pad=(10,10)), sg.Input(size=(30,0), key='confirm_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Cargo:                    ',pad=(10,10)), sg.Combo(CARGOS, size=(28,0), key='register_cargo', readonly=True), sg.Push()],
+            [sg.Push(), sg.Text('Projeto:                  ',pad=(10,10)), sg.Combo(LISTA_PROJETOS, size=(28,0), key='register_project', readonly=True), sg.Push()],
             [sg.Button('Voltar', pad=(10,15), size=(15,0)), sg.Push(), sg.Button('Registrar', pad=(10,0), size=(15,0))]
         ]
 
@@ -338,14 +619,19 @@ class Register:
                 break
             
             elif event == 'Registrar':
-                if self.values['register_email'] != '' \
+                if '@mobyweb.com.br' not in self.values['register_email']:
+                    sg.popup('Para se registrar seu e-mail deve ser de domínio da moby (@mobyweb.com.br).', title='Erro', icon=ICON)
+
+                elif self.values['register_email'] != '' \
                 or self.values['register_password'] != '' \
                 or self.values['register_cargo'] != '':
                     if self.values['register_password'] == self.values['confirm_password']:
                         if '@' in self.values['register_email'] and '.com' in self.values['register_email']:
                             try:
-                                Insert.register(self.values['register_email'],self.values['register_user'],self.values['register_password'],self.values['register_cargo'])
+                                Insert.register(self.values['register_email'],self.values['register_password'],self.values['register_cargo'],self.values['register_project'])
                                 sg.popup('Usuário registrado com sucesso!', title='Registro de usuário', icon=ICON)
+                                window.close()
+                                break
                             except:
                                 sg.popup('E-mail já registrado, tente outro endereço.', title='Erro', icon=ICON)
                         else:
@@ -381,8 +667,14 @@ class AdminLogin:
             if event == sg.WIN_CLOSED or event == 'Voltar':
                 break
             elif event == 'Login':
-                if Select.login_authentication(self.values['admin_email'], self.values['admin_password']) == True:
-                    if Select.role_authentication(self.values['admin_email'], self.values['admin_password']) in roles:
+                if '@' not in self.values['admin_email']:
+                    admin_email = self.values['admin_email'] + '@mobyweb.com.br'
+
+                else:
+                    admin_email = self.values['admin_email']
+                
+                if Select.login_authentication(admin_email, self.values['admin_password']) == True:
+                    if Select.role_authentication(admin_email, self.values['admin_password']) in roles:
                         window.close()
                         screen()
                         break
@@ -418,6 +710,7 @@ class Login:
             global logged_email
             global logged_role
             global last_login
+            global logged_project
 
             if event == sg.WIN_CLOSED or event == 'Sair':
                 break
@@ -432,17 +725,21 @@ class Login:
                         logged_password = ADMIN_INFO['password']
                         logged_email = ADMIN_INFO['email']
                         logged_role = ADMIN_INFO['role']
+                        logged_project = ADMIN_INFO['projeto']
                         Update.last_login(logged_email)
                         sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
                         window.close()
                         AdmMenu()
                     elif Select.login_authentication(login_email, self.values['password']) == True:
                         user_info = Select.user_information(login_email, self.values['password'])
-                        logged_email, logged_password, logged_role, last_login = user_info
+                        logged_email, logged_password, logged_role, last_login, logged_project = user_info
                         Update.last_login(logged_email)
                         sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
                         window.close()
-                        PrincipalMenu()
+                        if logged_role == 'Gestor' or logged_role == 'Líder':
+                            ManagerMenu()
+                        else:
+                            PrincipalMenu()
                     else:
                         sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
 
@@ -451,17 +748,21 @@ class Login:
                         logged_password = ADMIN_INFO['password']
                         logged_email = ADMIN_INFO['email']
                         logged_role = ADMIN_INFO['role']
+                        logged_project = ADMIN_INFO['projeto']
                         Update.last_login(logged_email)
                         sg.popup('Login realizado como administrador!', title='Login ADM', icon=ICON)
                         window.close()
                         AdmMenu()
                     elif Select.login_authentication(self.values['email'], self.values['password']) == True:
                         user_info = Select.user_information(self.values['email'], self.values['password'])
-                        logged_email, logged_password, logged_role, last_login = user_info
+                        logged_email, logged_password, logged_role, last_login, logged_project = user_info
                         Update.last_login(logged_email)
                         sg.popup('Login realizado com sucesso!', title='Login', icon=ICON)
                         window.close()
-                        PrincipalMenu()
+                        if logged_role == 'Gestor' or logged_role == 'Líder':
+                            ManagerMenu()
+                        else:
+                            PrincipalMenu()
                     else:
                         sg.popup('Email e/ou senha incorretos.',title='Erro', icon=ICON)
 

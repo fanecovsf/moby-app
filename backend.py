@@ -13,7 +13,7 @@ USER = 'postgres'
 PASSWORD = 'pRxI65oIubsdTlf'
 
 INSTALLED_MODULES = [
-    'Passagem de turno',
+    'Registro de turno',
 ]
 
 #Classes
@@ -22,23 +22,64 @@ class Insert:
     def __init__(self):
         pass
 
-    def register(email, senha, cargo):
+    def register(email, senha, cargo, project):
         email = ("'" + email + "'")
         senha = ("'" + senha + "'")
         cargo = ("'" + cargo + "'")
+        project = ("'" + project + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''INSERT INTO sc_aplicativos.app_usuarios (email, senha, cargo)
-        VALUES ({email}, {senha}, {cargo})
+        command =f'''INSERT INTO sc_aplicativos.app_usuarios (email, senha, cargo, ultimo_login, modulos, projeto)
+        VALUES ({email}, {senha}, {cargo}, NULL, NULL, {project})
         '''
 
         cur.execute(command)
         con.commit()
 
         cur.close()
-        con.close()     
+        con.close()
+
+    def add_project(project):
+        project = ("'" + project + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''INSERT INTO sc_aplicativos.app_projetos (projetos)
+        VALUES ({project})
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def add_tower(number, project, tower_code):
+        tower_code = ("'" + tower_code + "'")
+        chave = (f"'{number}-{project}'")
+        project = ("'" + project + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        if tower_code == "'NULL'":
+            command =f'''INSERT INTO sc_aplicativos.app_torres (chave, numero, projeto, codigo_torre)
+            VALUES ({chave}, {number}, {project}, NULL)
+            '''
+
+        else:
+            command =f'''INSERT INTO sc_aplicativos.app_torres (chave, numero, projeto, codigo_torre)
+            VALUES ({chave}, {number}, {project}, {tower_code})
+            '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
 
 class Select:
     def __init__(self):
@@ -75,7 +116,7 @@ class Select:
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''SELECT * FROM sc_aplicativos.app_usuarios
+        command =f'''SELECT email, senha, cargo, ultimo_login, projeto FROM sc_aplicativos.app_usuarios
         WHERE email={email}
         AND senha={password}
         '''
@@ -88,17 +129,17 @@ class Select:
         con.close()
 
         if result != None:
-            logged_email, logged_password, logged_role, last_login = result[:4]
-            return logged_email, logged_password, logged_role, last_login
+            logged_email, logged_password, logged_role, last_login, logged_project = result
+            return logged_email, logged_password, logged_role, last_login, logged_project
         else:
-            logged_email, logged_password, logged_role, last_login = '', '', '', ''
-            return logged_email, logged_password, logged_role, last_login
+            logged_email, logged_password, logged_role, last_login, logged_project = '', '', '', '', ''
+            return logged_email, logged_password, logged_role, last_login, logged_project
         
     def user_list():
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''SELECT email, senha, cargo, ultimo_login FROM sc_aplicativos.app_usuarios
+        command =f'''SELECT email, senha, cargo, ultimo_login, projeto FROM sc_aplicativos.app_usuarios
         '''
 
         cur.execute(command)
@@ -180,20 +221,75 @@ class Select:
         except:
             return []
         
+    def projects_list():
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT * FROM sc_aplicativos.app_projetos
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        return result
+    
+    def towers_list():
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT numero, projeto, codigo_torre FROM sc_aplicativos.app_torres
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        return result
+    
+    def tower_authentication(chave):
+        chave = ("'" + chave + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT * FROM sc_aplicativos.app_torres
+        WHERE chave={chave}
+        '''
+
+        cur.execute(command)
+        result = cur.fetchone()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result != None:
+            return True
+        else:
+            return False
+        
 class Update:
     def __init__(self):
         pass
 
-    def user_update(email, password, role):
+    def user_update(email, password, role, project):
         email = ("'" + email + "'")
         password = ("'" + password + "'")
         role = ("'" + role + "'")
+        project = ("'" + project + "'")
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
         command =f'''UPDATE sc_aplicativos.app_usuarios
-        SET senha = {password}, cargo = {role}
+        SET senha = {password}, cargo = {role}, projeto = {project}
         WHERE email = {email}
         '''
 
@@ -252,6 +348,25 @@ class Update:
         cur.close()
         con.close()
 
+    def role_project_update(email, role, project):
+        email = ("'" + email + "'")
+        role = ("'" + role + "'")
+        project = ("'" + project + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''UPDATE sc_aplicativos.app_usuarios
+        SET cargo = {role}, projeto = {project}
+        WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
 class TableColumns:
     def __init__(self):
         pass
@@ -290,6 +405,38 @@ class Delete:
 
         command =f'''DELETE FROM sc_aplicativos.app_usuarios
         WHERE email = {email}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def delete_project(project):
+        project = ("'" + project + "'")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''DELETE FROM sc_aplicativos.app_projetos
+        WHERE projetos = {project}
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def delete_tower(tower, project):
+        chave = f"'{tower}-{project}'"
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''DELETE FROM sc_aplicativos.app_torres
+        WHERE chave = {chave}
         '''
 
         cur.execute(command)
