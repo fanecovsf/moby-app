@@ -20,7 +20,7 @@ ADMIN_INFO = {
     'password': ADMIN_PASSWORD,
     'email': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[0],
     'role': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[2],
-    'projeto': 'all'
+    'projeto': 'Heineken'
 }
 
 APP_NAME = 'Moby'
@@ -245,6 +245,7 @@ class ChangePassword:
             event, self.value = window.read()
 
             if event == sg.WIN_CLOSED or event == 'Cancelar':
+                window.close()
                 break
 
             elif event == 'Confirmar mudança':
@@ -468,19 +469,19 @@ class ManagerMenu:
         menu_def = [
             ['&Módulos', ['&Registro de turno']],
             ['&Usuário', ['&Lista de usuários']],
-            ['&Opções', ['&Cadastro de projetos']]
+            ['&Opções', ['&Cadastro de projetos', '&Alterar senha']]
         ]
 
         #Layout
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
         ]
 
         #Janela
-        window = sg.Window(APP_NAME, layout, icon=ICON, size=(400,200))
+        window = sg.Window(APP_NAME, layout, icon=ICON)
 
         #Loop
         while True:
@@ -501,6 +502,9 @@ class ManagerMenu:
             elif event == 'Cadastro de torres':
                 Towers()
 
+            elif event == 'Alterar senha':
+                ChangePassword()
+
         window.close()
 
 #Menu ADM
@@ -520,12 +524,12 @@ class AdmMenu:
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Lista de usuários', pad=(10,10), size=(30,0)), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
         ]
 
         #Janela
-        window = sg.Window(APP_NAME, layout, icon=ICON, size=(400,200))
+        window = sg.Window(APP_NAME, layout, icon=ICON)
 
         #Loop
         while True:
@@ -564,8 +568,7 @@ class PrincipalMenu:
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(10,10), size=(30,0)), sg.Push()],
-            #[sg.Button('Alterar senha', pad=(20,40), font=('Arial', 9)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
         ]
 
         #Janela

@@ -81,6 +81,21 @@ class Insert:
         cur.close()
         con.close()
 
+    def create_passage(data, torre, email, turno, frente, descricao, cod_torre):
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''INSERT INTO sc_aplicativos.app_passagens (chave, torre, email, turno, frente, descricao, data_envio, enviado, cod_torre)
+        VALUES ('{data}-{cod_torre}-{turno}', {torre}, '{email}', '{turno}', '{frente}', '{descricao}', NULL, false, '{cod_torre}')
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
 class Select:
     def __init__(self):
         pass
@@ -275,6 +290,112 @@ class Select:
         else:
             return False
         
+    def search_tower_number(number):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT numero, projeto, codigo_torre FROM sc_aplicativos.app_torres
+        WHERE CAST(numero as Text) LIKE '%{number}%'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('','Sem resultados','')]
+            return result
+        else:
+            return result
+        
+    def search_tower_code(code):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT numero, projeto, codigo_torre FROM sc_aplicativos.app_torres
+        WHERE codigo_torre LIKE '%{code}%'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('','Sem resultados','')]
+            return result
+        else:
+            return result
+        
+    def search_tower_code_and_number(code, number):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT numero, projeto, codigo_torre FROM sc_aplicativos.app_torres
+        WHERE codigo_torre LIKE '%{code}%' AND
+        CAST(numero as Text) LIKE '%{number}%'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('','Sem resultados','')]
+            return result
+        else:
+            return result
+        
+    def passages_list(cod_torre):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT chave, email, turno, frente, data_envio, enviado FROM sc_aplicativos.app_passagens
+        WHERE cod_torre = '{cod_torre}'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('','','','Sem passagens','','')]
+            return result
+        else:
+            return result
+        
+    def edit_passage(chave):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT * FROM sc_aplicativos.app_passagens
+        WHERE chave = '{chave}'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchone()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('')]
+            return result
+        else:
+            return result
+        
 class Update:
     def __init__(self):
         pass
@@ -367,6 +488,36 @@ class Update:
         cur.close()
         con.close()
 
+    def desc_update(chave, desc):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''UPDATE sc_aplicativos.app_passagens
+        SET descricao = '{desc}'
+        WHERE chave = '{chave}'
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
+    def sent_update(chave):
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''UPDATE sc_aplicativos.app_passagens
+        SET enviado = true
+        WHERE chave = '{chave}'
+        '''
+
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+
 class TableColumns:
     def __init__(self):
         pass
@@ -444,4 +595,3 @@ class Delete:
 
         cur.close()
         con.close()
-
