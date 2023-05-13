@@ -3,7 +3,7 @@ from backend import Insert, Select, Update, Delete, INSTALLED_MODULES
 from Modules.registro_turno import StartPassagemTurno
 import pandas as pd
 import os
-
+#Git
 #Configurações
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 DEVELOPER_MODE = True
