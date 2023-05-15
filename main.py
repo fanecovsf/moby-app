@@ -36,7 +36,7 @@ LISTA_PROJETOS = [item for tuple in Select.projects_list() for item in tuple]
 
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.13'
+VERSION = 'Versão 0.14'
 
 #Telas
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -481,7 +481,7 @@ class ManagerMenu:
         ]
 
         #Janela
-        window = sg.Window(APP_NAME, layout, icon=ICON)
+        window = sg.Window(APP_NAME, layout, icon=ICON, size=(500,500))
 
         #Loop
         while True:
@@ -529,7 +529,7 @@ class AdmMenu:
         ]
 
         #Janela
-        window = sg.Window(APP_NAME, layout, icon=ICON)
+        window = sg.Window(APP_NAME, layout, icon=ICON, size=(500,500))
 
         #Loop
         while True:
@@ -572,7 +572,7 @@ class PrincipalMenu:
         ]
 
         #Janela
-        window = sg.Window(APP_NAME, layout, icon=ICON)
+        window = sg.Window(APP_NAME, layout, icon=ICON, size=(500,500))
 
         #Loop
         while True:
@@ -801,6 +801,5 @@ class Start:
             Login()
         else:
             sg.popup('Ops! Parece que há divergências entre as informações de administrador no banco de dados, por favor corrija antes de iniciar o aplicativo.', title='Erro', icon=ICON)
-
 
 Start()

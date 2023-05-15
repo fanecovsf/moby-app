@@ -1,6 +1,5 @@
 import psycopg2 as ps
 import datetime
-import os
 
 #Database info
 #-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -358,7 +357,7 @@ class Select:
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''SELECT chave, email, turno, frente, data_envio, enviado FROM sc_aplicativos.app_passagens
+        command =f'''SELECT chave, email, turno, frente, enviado, data_envio FROM sc_aplicativos.app_passagens
         WHERE cod_torre = '{cod_torre}'
         '''
 
@@ -392,6 +391,31 @@ class Select:
 
         if result == []:
             result = [('')]
+            return result
+        else:
+            return result
+        
+    def date_search(cod_torre, date):
+        date = (f"{date.split('/')[2]}-{date.split('/')[1]}-{date.split('/')[0]}")
+
+        con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
+        cur = con.cursor()
+
+        command =f'''SELECT chave, email, turno, frente, enviado, data_envio FROM sc_aplicativos.app_passagens
+        WHERE cod_torre = '{cod_torre}' AND
+        data_envio > '{date} 00:00:00' AND
+        data_envio < '{date} 23:59:59'
+        '''
+
+        cur.execute(command)
+        result = cur.fetchall()
+        con.commit()
+
+        cur.close()
+        con.close()
+
+        if result == []:
+            result = [('','','','','','')]
             return result
         else:
             return result
@@ -507,8 +531,12 @@ class Update:
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
+        data = datetime.datetime.today()
+        data = str(data)
+        data = data.split('.')[0]
+
         command =f'''UPDATE sc_aplicativos.app_passagens
-        SET enviado = true
+        SET enviado = true, data_envio = '{data}'
         WHERE chave = '{chave}'
         '''
 
@@ -595,3 +623,12 @@ class Delete:
 
         cur.close()
         con.close()
+
+class Functions:
+    def check_date_format(date):
+        try:
+            datetime.datetime.strptime(date, '%d/%m/%Y')
+            return True
+        
+        except ValueError:
+            return False

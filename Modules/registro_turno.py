@@ -6,7 +6,7 @@ import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import PySimpleGUI as sg
-from backend import Insert, Select, Update, Delete, INSTALLED_MODULES
+from backend import Insert, Select, Update, Delete, Functions
 
 
 #Configurações
@@ -100,8 +100,8 @@ class Edit:
         turno = Select.edit_passage(chave)[3]
         frente = Select.edit_passage(chave)[4]
         descricao = Select.edit_passage(chave)[5]
-        data_envio = Select.edit_passage(chave)[6]
-        enviado = Select.edit_passage(chave)[7]
+        data_envio = Select.edit_passage(chave)[8]
+        enviado = Select.edit_passage(chave)[6]
 
         if enviado == False:
             enviado = 'Não'
@@ -178,8 +178,8 @@ class Edit:
 class Passages:
     def __init__(self, cod_torre):
         num_torre = cod_torre.split('-')[0]
-        df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Data de envio', 'Enviado'])
-        df['Enviado'] = df['Enviado'].apply(lambda x: 'Não' if x == False else 'Sim')
+        df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+        df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
         df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
         df = df.sort_values('Data de envio', ascending=False)
         data = df.values.tolist()
@@ -190,9 +190,9 @@ class Passages:
         #Layout
         layout = [
             [sg.Push(), sg.Text(f'Registros - Torre {num_torre}', font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Input(key='-IN-', size=(10,0), pad=(10,0)),sg.CalendarButton('📆', target='-IN-', format='%d/%m/%Y',default_date_m_d_y=(1,None,2023), key='calendar', font=('Arial', 16))],
+            [sg.Input(key='-IN-', size=(10,0), pad=(10,0)),sg.CalendarButton('📆', target='-IN-', format='%d/%m/%Y',default_date_m_d_y=(1,None,2023), key='calendar', font=('Arial', 16)),sg.Button('Pesquisar 🔍')],
             [sg.Table(data, headings=header_list, num_rows=40, auto_size_columns=False, enable_events=True, justification='center', key='-TABLE-', max_col_width=40, def_col_width=20)],
-            [sg.Push(),sg.Button('Sair',size=(15,0)),sg.Button('Abrir',size=(15,0)),sg.Button('Criar registro',size=(15,0)),sg.Push(),sg.Button('Pesquisar 🔍')]
+            [sg.Push(),sg.Button('Sair',size=(15,0)),sg.Button('Abrir',size=(15,0)),sg.Button('Criar registro',size=(15,0)),sg.Push()]
         ]
 
         #Janela
@@ -211,8 +211,8 @@ class Passages:
                     row_index = self.values['-TABLE-'][0]
                     selected_data = list(df.iloc[row_index])
                     Edit(selected_data[0])
-                    df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Data de envio', 'Enviado'])
-                    df['Enviado'] = df['Enviado'].apply(lambda x: 'Não' if x == False else 'Sim')
+                    df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                    df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
                     df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
                     df = df.sort_values('Data de envio', ascending=False)
                     window['-TABLE-'].update(df.values.tolist())
@@ -220,12 +220,24 @@ class Passages:
                     pass
 
             elif event == 'Pesquisar 🔍':
-                print(self.values['calendar'])
+                if Functions.check_date_format(self.values['-IN-']) == False:
+                    sg.popup('Digite ou selecione uma data válida.', title='Erro', icon=ICON)
+
+                else:
+                    try:
+                        df = pd.DataFrame(Select.date_search(cod_torre, self.values['-IN-']), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                        df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
+                        df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
+                        df = df.sort_values('Data de envio', ascending=False)
+                        window['-TABLE-'].update(df.values.tolist())
+
+                    except:
+                        sg.popup('Erro', title='Erro', icon=ICON)
 
             elif event == 'Criar registro':
                 PassageCreate(cod_torre)
-                df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Data de envio', 'Enviado'])
-                df['Enviado'] = df['Enviado'].apply(lambda x: 'Não' if x == False else 'Sim')
+                df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
                 df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
                 df = df.sort_values('Data de envio', ascending=False)
                 window['-TABLE-'].update(df.values.tolist())
