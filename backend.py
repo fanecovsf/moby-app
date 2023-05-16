@@ -1,5 +1,8 @@
 import psycopg2 as ps
 import datetime
+import win32com.client as win32
+import os
+
 
 #Database info
 #-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -632,3 +635,35 @@ class Functions:
         
         except ValueError:
             return False
+
+class Email:
+    def email_passage(receivers, desc_passage, file_path, turn, project, user_email, tower):
+        today = datetime.date.today()
+        today = str(today)
+        today = (f"{today.split('-')[2]}/{today.split('-')[1]}/{today.split('-')[0]}")
+
+        # construct Outlook application instance
+        olApp = win32.Dispatch('Outlook.Application')
+        olNS = olApp.GetNameSpace('MAPI')
+
+        # construct the email item object
+        mailItem = olApp.CreateItem(0)
+        mailItem.Subject = f'Passagem de turno {turn} - Projeto {project} - Torre {tower} - {today}'
+        mailItem.BodyFormat = 1
+        mailItem.Body = f'''\n{desc_passage}
+
+Responsável pela passagem de turno: {user_email}
+        '''
+        mailItem.To = ', '.join(receivers)
+
+        for attachment in file_path:
+            if file_path == '':
+                pass
+            else:
+                mailItem.Attachments.Add(os.path.join(os.getcwd(), attachment))
+
+        mailItem.Display()
+
+        mailItem.Save()
+        mailItem.Send()
+

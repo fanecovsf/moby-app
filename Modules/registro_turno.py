@@ -6,7 +6,7 @@ import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import PySimpleGUI as sg
-from backend import Insert, Select, Update, Delete, Functions
+from backend import Insert, Select, Update, Delete, Functions, Email
 
 
 #Configurações
@@ -54,7 +54,7 @@ class PassageCreate:
             [sg.Text('Turno:', size=(20,0)), sg.Combo(TURNS,readonly=True,size=(30,0),key='-TURNO-')],
             [sg.Text('Frente:', size=(20,0)), sg.Combo(FRONTS, readonly=True, size=(30,0), key='-FRONT-')],
             [sg.Text('Descrição:', size=(20,0))],
-            [sg.Multiline(size=(140,10), key='-DESC-')],
+            [sg.Multiline(size=(70,30), key='-DESC-')],
             [sg.Push() ,sg.Button('Cancelar', size=(15,0)), sg.Button('Salvar', size=(15,0)), sg.Push()]
         ]
 
@@ -118,7 +118,7 @@ class Edit:
             [sg.Text('Frente:', size=(20,0)), sg.Text(frente, size=(30,0), key='-FRONT-')],
             [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-FRONT-')],
             [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-FRONT-')],
-            [sg.Text('Descrição:', size=(20,0))],
+            [sg.Text('Descrição:')],
             [sg.Text(descricao, key='-DESC-')],   
             [sg.Push() ,sg.Button('Sair', size=(15,0)), sg.Push()]
         ]
@@ -131,7 +131,14 @@ class Edit:
             [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-FRONT-')],
             [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-FRONT-')],
             [sg.Text('Descrição:', size=(20,0))],
-            [sg.Multiline(descricao,size=(140,10), key='-DESC-')],
+            [sg.Multiline(descricao,size=(70,30), key='-DESC-')],
+            [sg.Text('Lista de emails para envio da passagem:', pad=(10,10))],
+            [sg.Text('Email 1:'), sg.Input(size=(40,0), key='-EMAIL1-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH1-')],
+            [sg.Text('Email 2:'), sg.Input(size=(40,0), key='-EMAIL2-'),sg.Push(), sg.Input(key='-PATH1-', readonly=True, size=(10,0))],
+            [sg.Text('Email 3:'), sg.Input(size=(40,0), key='-EMAIL3-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH2-')],
+            [sg.Text('Email 4:'), sg.Input(size=(40,0), key='-EMAIL4-'),sg.Push(), sg.Input(key='-PATH2-', readonly=True, size=(10,0))],
+            [sg.Text('Email 5:'), sg.Input(size=(40,0), key='-EMAIL5-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH3-')],
+            [sg.Text('Email 6:'), sg.Input(size=(40,0), key='-EMAIL6-'),sg.Push(), sg.Input(key='-PATH3-', readonly=True, size=(10,0))],
             [sg.Push() ,sg.Button('Sair', size=(15,0)), sg.Button('Salvar', size=(15,0)),sg.Button('Enviar', size=(15,0)), sg.Push()]
         ]
 
@@ -166,9 +173,29 @@ class Edit:
                 ch = sg.popup_ok_cancel('Deseja realmente enviar o registro? O mesmo não poderá ser editado após o envio.', title='Confirmação', icon=ICON)
 
                 if ch == 'OK':
-                    Update.sent_update(chave)
-                    window.close()
-                    break
+                    try:
+                        Update.sent_update(chave)
+
+                        receivers = []
+                        attach = []
+
+                        for i in range(1, 7):
+                            email_key = f'-EMAIL{i}-'
+                            if self.values[email_key]:
+                                receivers.append(self.values[email_key])
+
+                        for i in range(1, 4):
+                            path_key = f'-PATH{i}-'
+                            if self.values[path_key]:
+                                attach.append(self.values[path_key])
+
+                        if receivers:
+                            Email.email_passage(receivers, descricao, attach, turno, logged_project, logged_email, torre)
+
+                        window.close()
+                        break
+                    except Exception as e:
+                        print(e)
 
                 elif ch == 'Cancel':
                     pass
