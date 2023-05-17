@@ -180,6 +180,7 @@ class Edit:
 
                 if ch == 'OK':
                     try:
+                        Update.desc_update(chave, self.values['-DESC-'])
                         Update.sent_update(chave)
 
                         receivers = []
@@ -196,7 +197,7 @@ class Edit:
                                 attach.append(self.values[path_key])
 
                         if receivers:
-                            Email.email_passage(receivers, descricao, attach, turno, logged_project, logged_email, torre)
+                            Email.email_passage(receivers, self.values['-DESC-'], attach, turno, logged_project, logged_email, torre)
 
                         window.close()
                         break

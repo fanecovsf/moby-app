@@ -160,6 +160,7 @@ class Select:
         cur = con.cursor()
 
         command =f'''SELECT email, senha, cargo, ultimo_login, projeto FROM sc_aplicativos.app_usuarios
+        ORDER BY email ASC
         '''
 
         cur.execute(command)
@@ -438,7 +439,7 @@ class Select:
         con.close()
 
         if result == []:
-            result = [('','','','','','','')]
+            result = [('','','','Sem passagens','','','')]
             return result
         else:
             return result
