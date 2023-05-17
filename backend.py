@@ -85,11 +85,14 @@ class Insert:
 
     def create_passage(data, torre, email, turno, frente, descricao, cod_torre):
 
+        now = datetime.datetime.now()
+        now = now.strftime('%Y-%m-%d %H:%M:%S')
+
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''INSERT INTO sc_aplicativos.app_passagens (chave, torre, email, turno, frente, descricao, data_envio, enviado, cod_torre)
-        VALUES ('{data}-{cod_torre}-{turno}', {torre}, '{email}', '{turno}', '{frente}', '{descricao}', NULL, false, '{cod_torre}')
+        command =f'''INSERT INTO sc_aplicativos.app_passagens (chave, torre, email, turno, frente, descricao, enviado, cod_torre, data_envio, data_criacao)
+        VALUES ('{data}-{cod_torre}-{turno}', {torre}, '{email}', '{turno}', '{frente}', '{descricao}', false, '{cod_torre}', NULL, '{now}')
         '''
 
         cur.execute(command)
@@ -360,7 +363,7 @@ class Select:
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
 
-        command =f'''SELECT chave, email, turno, frente, enviado, data_envio FROM sc_aplicativos.app_passagens
+        command =f'''SELECT chave, email, turno, frente, enviado, data_envio, data_criacao FROM sc_aplicativos.app_passagens
         WHERE cod_torre = '{cod_torre}'
         '''
 
@@ -372,7 +375,7 @@ class Select:
         con.close()
 
         if result == []:
-            result = [('','','','Sem passagens','','')]
+            result = [('','','','Sem passagens','','','')]
             return result
         else:
             return result
@@ -398,17 +401,34 @@ class Select:
         else:
             return result
         
-    def date_search(cod_torre, date):
+    def date_search(cod_torre, date, sent):
         date = (f"{date.split('/')[2]}-{date.split('/')[1]}-{date.split('/')[0]}")
+
+        if sent == 'Não':
+            sent = 'False'
+
+            command =f'''SELECT chave, email, turno, frente, enviado, data_envio, data_criacao FROM sc_aplicativos.app_passagens
+            WHERE cod_torre = '{cod_torre}' AND
+            data_criacao BETWEEN '{date} 00:00:00' AND '{date} 23:59:59' AND
+            enviado = '{sent}'
+            '''
+        elif sent == 'Sim':
+            sent = 'True'
+
+            command =f'''SELECT chave, email, turno, frente, enviado, data_envio, data_criacao FROM sc_aplicativos.app_passagens
+            WHERE cod_torre = '{cod_torre}' AND
+            data_criacao BETWEEN '{date} 00:00:00' AND '{date} 23:59:59' AND
+            enviado = '{sent}'
+            '''
+
+        elif sent == 'Todos':
+            command =f'''SELECT chave, email, turno, frente, enviado, data_envio, data_criacao FROM sc_aplicativos.app_passagens
+            WHERE cod_torre = '{cod_torre}' AND
+            data_criacao BETWEEN '{date} 00:00:00' AND '{date} 23:59:59'
+            '''
 
         con = ps.connect(host=HOST, database=DATABASE, user=USER, password=PASSWORD)
         cur = con.cursor()
-
-        command =f'''SELECT chave, email, turno, frente, enviado, data_envio FROM sc_aplicativos.app_passagens
-        WHERE cod_torre = '{cod_torre}' AND
-        data_envio > '{date} 00:00:00' AND
-        data_envio < '{date} 23:59:59'
-        '''
 
         cur.execute(command)
         result = cur.fetchall()
@@ -418,7 +438,7 @@ class Select:
         con.close()
 
         if result == []:
-            result = [('','','','','','')]
+            result = [('','','','','','','')]
             return result
         else:
             return result
@@ -632,7 +652,7 @@ class Functions:
         try:
             datetime.datetime.strptime(date, '%d/%m/%Y')
             return True
-        
+            
         except ValueError:
             return False
 

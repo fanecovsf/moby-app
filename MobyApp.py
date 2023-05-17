@@ -20,7 +20,7 @@ ADMIN_INFO = {
     'password': ADMIN_PASSWORD,
     'email': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[0],
     'role': Select.user_information('powerbi_dev@mobyweb.com.br', ADMIN_PASSWORD)[2],
-    'projeto': 'Heineken'
+    'projeto': 'Vibra'
 }
 
 APP_NAME = 'Moby'
@@ -36,7 +36,7 @@ LISTA_PROJETOS = [item for tuple in Select.projects_list() for item in tuple]
 
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.15'
+VERSION = 'Versão 0.2'
 
 #Telas
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -476,8 +476,8 @@ class ManagerMenu:
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2)), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2), font=('Arial', 10, 'bold')), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2), font=('Arial', 10, 'bold')), sg.Push()],
         ]
 
         #Janela
@@ -524,8 +524,8 @@ class AdmMenu:
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2)), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
+            [sg.Push(), sg.Button('Lista de usuários', pad=(15,15), size=(30,2), font=('Arial', 10, 'bold')), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2), font=('Arial', 10, 'bold')), sg.Push()],
         ]
 
         #Janela
@@ -568,7 +568,7 @@ class PrincipalMenu:
         layout = [
             [sg.Menu(menu_def, key='-MENUBAR-')],
             [sg.Push(), sg.Text('Menu principal', pad=(10,10), font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2)), sg.Push()],
+            [sg.Push(), sg.Button('Registro de turno', pad=(15,15), size=(30,2), font=('Arial', 10, 'bold')), sg.Push()],
         ]
 
         #Janela

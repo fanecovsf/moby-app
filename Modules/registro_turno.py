@@ -6,7 +6,7 @@ import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import PySimpleGUI as sg
-from backend import Insert, Select, Update, Delete, Functions, Email
+from backend import Insert, Select, Update, Functions, Email
 
 
 #Configurações
@@ -102,6 +102,7 @@ class Edit:
         descricao = Select.edit_passage(chave)[5]
         data_envio = Select.edit_passage(chave)[8]
         enviado = Select.edit_passage(chave)[6]
+        criacao = Select.edit_passage(chave)[9]
 
         if enviado == False:
             enviado = 'Não'
@@ -116,10 +117,11 @@ class Edit:
             [sg.Text('Responsável:', size=(20,0)), sg.Text(email,size=(30,0),key='-EMAIL-')],
             [sg.Text('Turno:', size=(20,0)), sg.Text(turno,size=(30,0),key='-TURNO-')],
             [sg.Text('Frente:', size=(20,0)), sg.Text(frente, size=(30,0), key='-FRONT-')],
-            [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-FRONT-')],
-            [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-FRONT-')],
+            [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-DATAENVIO-')],
+            [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-ENVIADO-')],
+            [sg.Text('Data de criação:', size=(20,0)), sg.Text(criacao, size=(30,0), key='-CRIACAO-')],
             [sg.Text('Descrição:')],
-            [sg.Text(descricao, key='-DESC-')],   
+            [sg.Text(descricao, key='-DESC-')],
             [sg.Push() ,sg.Button('Sair', size=(15,0)), sg.Push()]
         ]
 
@@ -128,17 +130,21 @@ class Edit:
             [sg.Text('Responsável:', size=(20,0)), sg.Text(email,size=(30,0),key='-EMAIL-')],
             [sg.Text('Turno:', size=(20,0)), sg.Text(turno,size=(30,0),key='-TURNO-')],
             [sg.Text('Frente:', size=(20,0)), sg.Text(frente, size=(30,0), key='-FRONT-')],
-            [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-FRONT-')],
-            [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-FRONT-')],
+            [sg.Text('Data de envio:', size=(20,0)), sg.Text(data_envio, size=(30,0), key='-DATAENVIO-')],
+            [sg.Text('Enviado:', size=(20,0)), sg.Text(enviado, size=(30,0), key='-ENVIADO-')],
+            [sg.Text('Data de criação:', size=(20,0)), sg.Text(criacao, size=(30,0), key='-CRIACAO-')],
             [sg.Text('Descrição:', size=(20,0))],
-            [sg.Multiline(descricao,size=(70,30), key='-DESC-')],
+            [sg.Multiline(descricao,size=(140,30), key='-DESC-')],
             [sg.Text('Lista de emails para envio da passagem:', pad=(10,10))],
-            [sg.Text('Email 1:'), sg.Input(size=(40,0), key='-EMAIL1-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH1-')],
-            [sg.Text('Email 2:'), sg.Input(size=(40,0), key='-EMAIL2-'),sg.Push(), sg.Input(key='-PATH1-', readonly=True, size=(10,0))],
-            [sg.Text('Email 3:'), sg.Input(size=(40,0), key='-EMAIL3-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH2-')],
-            [sg.Text('Email 4:'), sg.Input(size=(40,0), key='-EMAIL4-'),sg.Push(), sg.Input(key='-PATH2-', readonly=True, size=(10,0))],
-            [sg.Text('Email 5:'), sg.Input(size=(40,0), key='-EMAIL5-'),sg.Push(), sg.FileBrowse('Anexar arquivo ao email',target='-PATH3-')],
-            [sg.Text('Email 6:'), sg.Input(size=(40,0), key='-EMAIL6-'),sg.Push(), sg.Input(key='-PATH3-', readonly=True, size=(10,0))],
+            [sg.Text('Email 1:'), sg.Input(size=(40,0), key='-EMAIL1-'), sg.FileBrowse('Anexo 1',target='-PATH1-', pad=(10,None))],
+            [sg.Text('Email 2:'), sg.Input(size=(40,0), key='-EMAIL2-'),sg.Push(),
+            sg.Input(key='-PATH1-', readonly=True, size=(100,0), disabled_readonly_background_color='#004a7c', disabled_readonly_text_color='#f2f9ff')],
+            [sg.Text('Email 3:'), sg.Input(size=(40,0), key='-EMAIL3-'), sg.FileBrowse('Anexo 2',target='-PATH2-', pad=(10,None))],
+            [sg.Text('Email 4:'), sg.Input(size=(40,0), key='-EMAIL4-'),sg.Push(),
+            sg.Input(key='-PATH2-', readonly=True, size=(100,0), disabled_readonly_background_color='#004a7c', disabled_readonly_text_color='#f2f9ff')],
+            [sg.Text('Email 5:'), sg.Input(size=(40,0), key='-EMAIL5-'), sg.FileBrowse('Anexo 3',target='-PATH3-', pad=(10,None))],
+            [sg.Text('Email 6:'), sg.Input(size=(40,0), key='-EMAIL6-'),sg.Push(), 
+            sg.Input(key='-PATH3-', readonly=True, size=(100,0), disabled_readonly_background_color='#004a7c', disabled_readonly_text_color='#f2f9ff')],
             [sg.Push() ,sg.Button('Sair', size=(15,0)), sg.Button('Salvar', size=(15,0)),sg.Button('Enviar', size=(15,0)), sg.Push()]
         ]
 
@@ -148,7 +154,7 @@ class Edit:
 
         elif enviado == 'Não':
             if logged_email != email:
-                if logged_role == 'Gestor' or logged_role == 'Líder' or logged_role == 'Desenvolvedor':
+                if logged_role in ['Gestor', 'Líder', 'Desenvolvedor']:
                     window = sg.Window(MODULE_NAME, layout_edit, icon=ICON)
                 else:
                     sg.popup('Registros não enviados só podem ser abertos pelos seus responsáveis, aguarde o envio do mesmo.', title='Erro', icon=ICON)
@@ -205,19 +211,41 @@ class Edit:
 class Passages:
     def __init__(self, cod_torre):
         num_torre = cod_torre.split('-')[0]
-        df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+        df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio', 'Data de criação'])
         df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
         df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
         df = df.sort_values('Data de envio', ascending=False)
         data = df.values.tolist()
         header_list = list(df.columns)
 
+        if datetime.datetime.now().day < 10:
+            dia = f'0{datetime.datetime.now().day}'
+        else:
+            dia = datetime.datetime.now().day
+
+        if datetime.datetime.now().month < 10:
+            mês = f'0{datetime.datetime.now().month}'
+        else:
+            mês = datetime.datetime.now().month
+
         sg.theme(THEME)
 
         #Layout
         layout = [
             [sg.Push(), sg.Text(f'Registros - Torre {num_torre}', font=('Arial', 18, 'bold')), sg.Push()],
-            [sg.Input(key='-IN-', size=(10,0), pad=(10,0)),sg.CalendarButton('📆', target='-IN-', format='%d/%m/%Y',default_date_m_d_y=(1,None,2023), key='calendar', font=('Arial', 16)),sg.Button('Pesquisar 🔍')],
+
+            [
+            sg.Text('Data de criação:'),
+            sg.Text('Enviado:', pad=(90,0))
+            ],
+
+            [
+            sg.Input(key='-IN-', size=(10,0), pad=(15,0), default_text=f'{dia}/{mês}/{datetime.datetime.now().year}'),
+            sg.CalendarButton('📆', target='-IN-', format='%d/%m/%Y',default_date_m_d_y=(datetime.datetime.now().month,None,datetime.datetime.now().year), key='calendar', font=('Arial', 16), pad=(10,0)),
+            sg.Combo(['Sim', 'Não', 'Todos'], readonly=True, size=(10,0), pad=(30,0), key='-VSEND-', default_value='Todos'),
+            sg.Button('Pesquisar 🔍'),
+            ],
+
             [sg.Table(data, headings=header_list, num_rows=40, auto_size_columns=False, enable_events=True, justification='center', key='-TABLE-', max_col_width=40, def_col_width=20)],
             [sg.Push(),sg.Button('Sair',size=(15,0)),sg.Button('Abrir',size=(15,0)),sg.Button('Criar registro',size=(15,0)),sg.Push()]
         ]
@@ -238,7 +266,7 @@ class Passages:
                     row_index = self.values['-TABLE-'][0]
                     selected_data = list(df.iloc[row_index])
                     Edit(selected_data[0])
-                    df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                    df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio', 'Data de criação'])
                     df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
                     df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
                     df = df.sort_values('Data de envio', ascending=False)
@@ -252,18 +280,19 @@ class Passages:
 
                 else:
                     try:
-                        df = pd.DataFrame(Select.date_search(cod_torre, self.values['-IN-']), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                        df = pd.DataFrame(Select.date_search(cod_torre, self.values['-IN-'], self.values['-VSEND-']), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio', 'Data de criação'])
                         df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
                         df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
                         df = df.sort_values('Data de envio', ascending=False)
                         window['-TABLE-'].update(df.values.tolist())
 
-                    except:
+                    except Exception as e:
+                        print(e)
                         sg.popup('Erro', title='Erro', icon=ICON)
 
             elif event == 'Criar registro':
                 PassageCreate(cod_torre)
-                df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio'])
+                df = pd.DataFrame(Select.passages_list(cod_torre), columns=['Chave', 'Responsável', 'Turno', 'Frente', 'Enviado', 'Data de envio', 'Data de criação'])
                 df['Enviado'] = df['Enviado'].apply(lambda x: '' if x == '' else 'Não' if x == False else 'Sim')
                 df['Data de envio'] = df['Data de envio'].apply(lambda x: '' if x == None else x)
                 df = df.sort_values('Data de envio', ascending=False)
@@ -317,23 +346,35 @@ class TowerList:
 
                 if code == '' and number == '':
                     df = pd.DataFrame(Select.towers_list(), columns=['Número', 'Projeto', 'Código da torre'])
-                    df = df.loc[df['Projeto'] == logged_project]
+                    if logged_role != 'Desenvolvedor':
+                        df = df.loc[df['Projeto'] == logged_project]
+                    else:
+                        pass
                     window['-TABLE-'].update(df.values.tolist())
                     pass
 
                 elif code != '' and number == '':
                     df = pd.DataFrame(Select.search_tower_code(code), columns=['Número', 'Projeto', 'Código da torre'])
-                    df = df.loc[df['Projeto'] == logged_project]
+                    if logged_role != 'Desenvolvedor':
+                        df = df.loc[df['Projeto'] == logged_project]
+                    else:
+                        pass
                     window['-TABLE-'].update(df.values.tolist())
 
                 elif code == '' and number != '':
                     df = pd.DataFrame(Select.search_tower_number(number), columns=['Número', 'Projeto', 'Código da torre'])
-                    df = df.loc[df['Projeto'] == logged_project]
+                    if logged_role != 'Desenvolvedor':
+                        df = df.loc[df['Projeto'] == logged_project]
+                    else:
+                        pass
                     window['-TABLE-'].update(df.values.tolist())
 
                 elif code != '' and number != '':
                     df = pd.DataFrame(Select.search_tower_code_and_number(code, number), columns=['Número', 'Projeto', 'Código da torre'])
-                    df = df.loc[df['Projeto'] == logged_project]
+                    if logged_role != 'Desenvolvedor':
+                        df = df.loc[df['Projeto'] == logged_project]
+                    else:
+                        pass
                     window['-TABLE-'].update(df.values.tolist())
 
 #Start engine
