@@ -36,7 +36,7 @@ LISTA_PROJETOS = [item for tuple in Select.projects_list() for item in tuple]
 
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.2'
+VERSION = 'Versão 0.21 - 1º Deploy'
 
 #Telas
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -74,26 +74,34 @@ class TowersRegister:
                     sg.popup('Torre já existente.', title='Erro', icon=ICON)
 
                 else:
+                    err = False
                     for i in self.values['tower_number']:
-                        if i not in '1234567890':
-                            sg.popup('O campo "Número" só pode ser preenchido com números, e deve ser um número inteiro (Sem ponto nem vírgula).', title='Erro', icon=ICON)
+                        if i not in ['1','2','3','4','5','6','7','8','9','0']:
+                            err = True
                         else:
-                            
-                            if self.values['tower_number'] == '' \
-                            or self.values['tower_project'] == '':
-                                sg.popup('Todos os campos devem estar preenchidos.', title='Erro', icon=ICON)
+                            pass
+                    if err == True:
+                        sg.popup('O campo "Número" só pode ser preenchido com números, e deve ser um número inteiro (Sem ponto nem vírgula).', title='Erro', icon=ICON)
+                        err = True
+
+                    else:                        
+                        if self.values['tower_number'] == '' \
+                        or self.values['tower_project'] == '':
+                            sg.popup('Todos os campos devem estar preenchidos.', title='Erro', icon=ICON)
+
+                        else:
+                            if self.values['cod_tower'] == '':
+                                codigo_torre = 'NULL'
 
                             else:
-                                if self.values['cod_tower'] == '':
-                                    codigo_torre = 'NULL'
+                                codigo_torre = self.values['cod_tower']
 
-                                else:
-                                    codigo_torre = self.values['cod_tower']
+                            err = True
                                 
-                                Insert.add_tower(self.values['tower_number'], self.values['tower_project'], codigo_torre)
-                                sg.popup('Torre cadastrada com sucesso!', title='Sucesso', icon=ICON)
-                                window.close()
-                                break
+                            Insert.add_tower(self.values['tower_number'], self.values['tower_project'], codigo_torre)
+                            sg.popup('Torre cadastrada com sucesso!', title='Sucesso', icon=ICON)
+                            window.close()
+                            break
 
 #Torres
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -234,7 +242,7 @@ class ChangePassword:
             [sg.Push(), sg.Text('Senha antiga:              ',pad=(10,10)), sg.Input(size=(30,0),key='old_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Nova senha:                ',pad=(10,10)), sg.Input(size=(30,0),key='new_password', password_char='*'), sg.Push()],
             [sg.Push(), sg.Text('Confirme a nova senha:',pad=(10,10)), sg.Input(size=(30,0),key='new_password2', password_char='*'), sg.Push()],
-            [sg.Button('Cancelar', pad=(10,15), size=(15,0)), sg.Push(), sg.Button('Confirmar mudança', pad=(10,0), size=(15,0))]
+            [sg.Button('Cancelar', pad=(10,15), size=(15,0)), sg.Push(), sg.Button('Confirmar mudança', pad=(10,15), size=(15,0))]
         ]
 
         #Janela
@@ -469,7 +477,7 @@ class ManagerMenu:
         menu_def = [
             ['&Módulos', ['&Registro de turno']],
             ['&Usuário', ['&Lista de usuários']],
-            ['&Opções', ['&Cadastro de projetos', '&Alterar senha']]
+            ['&Opções', ['&Cadastro de projetos', '&Cadastro de torres', '&Alterar senha']]
         ]
 
         #Layout
@@ -719,7 +727,7 @@ class Login:
                 break
 
             elif event == 'Registro de usuário':
-                AdminLogin(['Gestor', 'Líder', 'Desenvolvedor'], Register)
+                AdminLogin(['Gestor','Líder','Desenvolvedor'], Register)
 
             elif event == 'Login':
                 if '@' not in self.values['email']:

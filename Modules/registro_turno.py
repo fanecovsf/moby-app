@@ -389,4 +389,8 @@ class StartPassagemTurno:
         global logged_project
 
         logged_email, logged_password, logged_role, last_login, logged_project = Select.user_information(email, password)
-        TowerList()
+
+        if MODULE_NAME not in Select.modules_information(logged_email):
+            sg.popup('O usuário não tem acesso a esse módulo, solicite acesso ao seu gestor ou líder.', title='Erro', icon=ICON)
+        else:
+            TowerList()
