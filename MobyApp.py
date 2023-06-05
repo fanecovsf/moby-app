@@ -36,7 +36,7 @@ LISTA_PROJETOS = [item for tuple in Select.projects_list() for item in tuple]
 
 THEME = 'DarkTeal12'
 
-VERSION = 'Versão 0.21 - 1º Deploy'
+VERSION = 'Versão 0.21 - 1º Deploy - Demo'
 
 #Telas
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
